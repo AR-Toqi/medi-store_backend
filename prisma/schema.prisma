@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  isBanned  Boolean  @default(false)
+
+  medicines Medicine[] @relation("SellerMedicines")
+  orders    Order[]    @relation("CustomerOrders")
+  reviews   Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  medicines Medicine[]
+  createdAt DateTime   @default(now())
+}
+
+model Medicine {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  price        Float
+  stock        Int
+  manufacturer String
+  imageUrl     String?
+
+  categoryId String
+  sellerId   String
+
+  category Category @relation(fields: [categoryId], references: [id])
+  seller   User     @relation("SellerMedicines", fields: [sellerId], references: [id])
+
+  reviews    Review[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  customerId      String
+  status          OrderStatus @default(PENDING)
+  totalAmount     Float
+  shippingAddress String
+  paymentMethod   String      @default("COD")
+
+  customer User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  items    OrderItem[]
+
+  createdAt DateTime @default(now())
+}
+
+model OrderItem {
+  id         String @id @default(uuid())
+  orderId    String
+  medicineId String
+  quantity   Int
+  price      Float
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+}
+
+model Review {
+  id         String  @id @default(uuid())
+  rating     Int
+  comment    String
+
+  userId     String
+  medicineId String
+
+  user     User     @relation(fields: [userId], references: [id])
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+
+  createdAt DateTime @default(now())
+}
