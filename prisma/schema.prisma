@@ -28,12 +28,9 @@ enum OrderStatus {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  name     String
-  email    String  @unique
-  password String
-  role     Role    @default(CUSTOMER)
-  isBanned Boolean @default(false)
+  id    String @id @default(uuid())
+  name  String
+  email String @unique
 
   medicines Medicine[] @relation("SellerMedicines")
   orders    Order[]    @relation("CustomerOrders")
@@ -46,7 +43,10 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  @@map("user")
+  role     String?  @default("CUSTOMER")
+  isBanned Boolean? @default(false)
+
+  @@map("User")
 }
 
 model Category {

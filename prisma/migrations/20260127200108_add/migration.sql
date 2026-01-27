@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "isBanned" BOOLEAN DEFAULT false,
+ADD COLUMN     "role" TEXT DEFAULT 'CUSTOMER';

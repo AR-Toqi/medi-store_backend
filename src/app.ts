@@ -5,9 +5,13 @@ import { auth } from "./lib/auth";
 
 const app: Application = express();
 
-
-app.all("/api/auth/*", toNodeHandler(auth));
-app.use(cors());
+app.all("/api/auth/*splat", toNodeHandler(auth));
+app.use(cors(
+  {
+    origin: process.env.APP_URL,
+    credentials: true
+  }
+));
 app.use(express.json());
 
 app.get("/", (_, res) => {
