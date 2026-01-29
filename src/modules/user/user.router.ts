@@ -7,10 +7,10 @@ import { USER_ROLE } from "../../types/role";
 const router = Router();
 
 //* get current user
-router.get("/auth", requireAuth, userController.getCurrentUser);
+router.get("/", requireAuth, userController.getCurrentUser);
 
 //* update user
-router.put("/auth/me", requireAuth, userController.updateUser);
+router.put("/me", requireAuth, userController.updateUser);
 
 //* get all users
 router.get("/admin/users", requireAuth, roleGuard(USER_ROLE.ADMIN), userController.getAllUsers);
