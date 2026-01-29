@@ -4,6 +4,7 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import { userController } from "./modules/user/user.controller";
 import { userRoutes } from "./modules/user/user.router";
+import { categoryRoutes } from "./modules/categories/categories.router";
 
 const app: Application = express();
 
@@ -16,10 +17,11 @@ app.use(cors(
 ));
 app.use(express.json());
 
-app.use ("/api/auth",userRoutes );
+app.use("/api/auth", userRoutes);
 
+app.use("/api", categoryRoutes);
 
-app.use ("/api",userRoutes );
+app.use("/api/admin", categoryRoutes);
 
 
 app.get("/", (_, res) => {

@@ -51,19 +51,27 @@ model User {
 
 model Category {
   id        String     @id @default(uuid())
-  name      String     @unique
+  name      String     
+  slug      String     @unique
+  isActive  Boolean    @default(true)
+  description String?
+  image       String?
   medicines Medicine[]
   createdAt DateTime   @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Medicine {
   id           String  @id @default(uuid())
   name         String
+  slug         String
   description  String
-  price        Float
+  price        Decimal @db.Decimal(10, 2)
   stock        Int
   manufacturer String
   imageUrl     String?
+  isFeatured   Boolean  @default(false)
+  dosageForm   String? 
 
   categoryId String
   sellerId   String
