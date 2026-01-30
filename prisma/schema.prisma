@@ -28,37 +28,35 @@ enum OrderStatus {
 }
 
 model User {
-  id    String @id @default(uuid())
-  name  String
-  email String @unique
+  id      String   @id @default(uuid())
+  name    String
+  email   String   @unique
+  orders  Order[]  @relation("CustomerOrders")
+  reviews Review[]
 
-  medicines Medicine[] @relation("SellerMedicines")
-  orders    Order[]    @relation("CustomerOrders")
-  reviews   Review[]
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  emailVerified Boolean   @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  emailVerified Boolean        @default(false)
   image         String?
   sessions      Session[]
   accounts      Account[]
-
-  role     String?  @default("CUSTOMER")
-  isBanned Boolean? @default(false)
+  sellerProfile SellerProfile?
+  role          String?        @default("CUSTOMER")
+  isBanned      Boolean?       @default(false)
 
   @@map("User")
 }
 
 model Category {
-  id        String     @id @default(uuid())
-  name      String     
-  slug      String     @unique
-  isActive  Boolean    @default(true)
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  isActive    Boolean    @default(true)
   description String?
   image       String?
-  medicines Medicine[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime @updatedAt
+  medicines   Medicine[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Medicine {
@@ -70,20 +68,39 @@ model Medicine {
   stock        Int
   manufacturer String
   imageUrl     String?
-  isFeatured   Boolean  @default(false)
-  dosageForm   String? 
+  isFeatured   Boolean @default(false)
+  dosageForm   String?
 
   categoryId String
   sellerId   String
 
-  category Category @relation(fields: [categoryId], references: [id])
-  seller   User     @relation("SellerMedicines", fields: [sellerId], references: [id])
+  category Category      @relation(fields: [categoryId], references: [id])
+  seller   SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   reviews    Review[]
   orderItems OrderItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SellerProfile {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  shopName        String
+  shopDescription String?
+  shopLogo        String?
+  licenseNumber   String? @unique
+  isVerified      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicines Medicine[]
+
+  @@index([userId])
 }
 
 model Order {

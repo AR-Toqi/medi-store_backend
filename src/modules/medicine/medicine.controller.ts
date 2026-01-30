@@ -3,20 +3,14 @@ import { AuthRequest } from "../../middlewares/auth.middleware";
 import { medicineService } from "./medicine.service";
 
 /**
- * ADMIN/SELLER → Create medicine
+ * SELLER → Create medicine (for authenticated sellers)
  */
 const createMedicine = async (req: AuthRequest, res: Response) => {
   try {
     const payload = req.body;
-    const userId = req.user?.id;
+    const sellerId = req.user?.id;
 
-    // Add seller ID from authenticated user
-    const medicineData = {
-      ...payload,
-      sellerId: userId,
-    };
-
-    const medicine = await medicineService.createMedicine(medicineData);
+    const medicine = await medicineService.createMedicineForSeller(sellerId as string, payload);
 
     return res.status(201).json({
       success: true,
@@ -61,6 +55,36 @@ const getAllMedicines = async (req: AuthRequest, res: Response) => {
 };
 
 /**
+ * SELLER → Get own medicines (with pagination and search)
+ */
+const getMedicinesBySeller = async (req: AuthRequest, res: Response) => {
+  try {
+    const sellerId = req.user?.id;
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+    const search = req.query.search as string | undefined;
+
+    const result = await medicineService.getMedicinesBySeller(sellerId as string, {
+      page,
+      limit,
+      ...(search && { search }),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Your medicines fetched successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch medicines",
+    });
+  }
+};
+
+/**
  * PUBLIC → Get medicine details by slug
  */
 const getMedicineDetails = async (req: AuthRequest, res: Response) => {
@@ -83,14 +107,38 @@ const getMedicineDetails = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * ADMIN/SELLER → Update medicine
+ * SELLER → Get medicine details by slug (own medicine only)
+ */
+const getMedicineDetailsBySeller = async (req: AuthRequest, res: Response) => {
+  try {
+    const { slug } = req.params;
+    const sellerId = req.user?.id;
+
+    const medicine = await medicineService.getMedicineDetailsBySeller(sellerId as string, slug as string);
+
+    return res.status(200).json({
+      success: true,
+      message: "Medicine details fetched successfully",
+      data: medicine,
+    });
+  } catch (error: any) {
+    return res.status(404).json({
+      success: false,
+      message: error.message || "Medicine not found",
+    });
+  }
+};
+
+/**
+ * SELLER → Update own medicine
  */
 const updateMedicine = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const payload = req.body;
+    const sellerId = req.user?.id;
 
-    const updatedMedicine = await medicineService.updateMedicine(id as string, payload);
+    const updatedMedicine = await medicineService.updateMedicineBySeller(sellerId as string, id as string, payload);
 
     return res.status(200).json({
       success: true,
@@ -106,13 +154,14 @@ const updateMedicine = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * ADMIN/SELLER → Delete medicine
+ * SELLER → Delete own medicine
  */
 const deleteMedicine = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const sellerId = req.user?.id;
 
-    const result = await medicineService.deleteMedicine(id as string);
+    const result = await medicineService.deleteMedicineBySeller(sellerId as string, id as string);
 
     return res.status(200).json({
       success: true,
@@ -129,7 +178,9 @@ const deleteMedicine = async (req: AuthRequest, res: Response) => {
 export const medicineController = {
   createMedicine,
   getAllMedicines,
+  getMedicinesBySeller,
   getMedicineDetails,
+  getMedicineDetailsBySeller,
   updateMedicine,
   deleteMedicine,
 };
