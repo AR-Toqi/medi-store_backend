@@ -16,7 +16,6 @@ const getCurrentUser = async(userid: string)=> {
         }
 
         return user;
-
 };
 
 const updateUser = async (userId: string, payload: any) => {
@@ -24,7 +23,6 @@ const updateUser = async (userId: string, payload: any) => {
       where: { id: userId },
       data: payload
     })
-
     return result
 };
 

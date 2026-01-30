@@ -2,8 +2,6 @@ import { Response } from "express"
 import { AuthRequest } from "../../middlewares/auth.middleware"
 import { userService } from "./user.service"
 
-
-
 const getAllUsers = async (req: AuthRequest, res: Response) => {
   try {
     const users = await userService.getAllUsers()
@@ -50,7 +48,6 @@ const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id
     const payload = req.body
-
     const updatedUser = await userService.updateUser(userId, payload)
 
     return res.status(200).json({

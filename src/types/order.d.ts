@@ -1,5 +1,4 @@
 import type { Role, OrderStatus } from "../../generated/prisma/enums";
-
 export interface CreateOrderPayload {
   customerId: string;
   items: OrderItemPayload[];

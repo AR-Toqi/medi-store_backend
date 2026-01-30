@@ -1,6 +1,5 @@
 import { prisma } from "../../lib/prisma";
 import { slugify } from "../../utils/slugify";
-
 interface CreateCategoryPayload {
   name: string;
 }

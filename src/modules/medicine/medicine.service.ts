@@ -3,10 +3,8 @@ import { slugify } from "../../utils/slugify";
 import type 
     { CreateMedicineInput, 
     UpdateMedicineInput, 
-    MedicineQueryInput, 
     GetMedicinesParams } 
     from './../../types/medicine.d';
-
 
     export const createMedicine = async (payload: CreateMedicineInput) => {
   
@@ -495,6 +493,7 @@ export const medicineService = {
   updateMedicine,
   deleteMedicine,
   getMedicineDetails,
+  
   // Seller-specific functions with validation
   createMedicineForSeller,
   getMedicinesBySeller,
