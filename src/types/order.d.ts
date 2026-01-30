@@ -26,3 +26,9 @@ export interface GetOrdersParams {
   status?: OrderStatus;
   search?: string;
 }
+
+export interface CheckoutPayload {
+  addressId: string;
+  paymentMethod?: string;
+  customerNote?: string;
+}

@@ -9,9 +9,7 @@ const router = Router();
 //* Customer routes (authenticated users)
 router.post("/", requireAuth, orderController.createOrder);
 router.get("/my-orders", requireAuth, orderController.getMyOrders);
-
-//* Admin routes
-router.get("/orders", requireAuth, roleGuard(USER_ROLE.ADMIN), orderController.getAllOrders);
+router.post("/checkout", requireAuth, orderController.checkout);
 
 //* Seller routes
 router.get("/dashboard/orders", requireAuth, roleGuard(USER_ROLE.SELLER), orderController.getOrdersBySeller);

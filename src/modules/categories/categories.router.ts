@@ -12,28 +12,6 @@ const router = Router();
 router.get("/categories", categoryController.getAllCategories);
 router.get("/categories/:id", categoryController.getSingleCategory);
 
-/**
- * Admin-only routes
- */
-router.post(
-  "/categories",
-  requireAuth,
-  roleGuard(USER_ROLE.ADMIN),
-  categoryController.createCategory
-);
-
-router.put(
-  "/categories/:id",
-  requireAuth,
-  roleGuard(USER_ROLE.ADMIN),
-  categoryController.updateCategory
-);
-
-router.delete(
-  "/categories/:id",
-  requireAuth,
-  roleGuard(USER_ROLE.ADMIN),
-  categoryController.deleteCategory
-);
+// Admin routes moved to /api/admin/categories
 
 export const categoryRoutes = router;

@@ -18,7 +18,6 @@ router.put("/", requireAuth, roleGuard(USER_ROLE.SELLER), sellerProfileControlle
 //* Delete own seller profile
 router.delete("/", requireAuth, roleGuard(USER_ROLE.SELLER), sellerProfileController.deleteSellerProfile);
 
-//* Admin: Get all sellers
-router.get("/sellers", requireAuth, roleGuard(USER_ROLE.ADMIN), sellerProfileController.getAllSellers);
+// Admin routes moved to /api/admin/sellers
 
 export const sellerProfileRoutes = router;

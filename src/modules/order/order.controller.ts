@@ -192,8 +192,32 @@ const updateOrderStatus = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/**
+ * CUSTOMER → Checkout: create order from cart
+ */
+const checkout = async (req: AuthRequest, res: Response) => {
+  try {
+    const customerId = req.user?.id as string;
+    const payload = req.body; // { addressId, paymentMethod?, customerNote? }
+
+    const order = await orderService.createOrderFromCart(customerId, payload);
+
+    return res.status(201).json({
+      success: true,
+      message: "Order created from cart successfully",
+      data: order,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to create order from cart",
+    });
+  }
+};
+
 export const orderController = {
   createOrder,
+  checkout,
   getMyOrders,
   getAllOrders,
   getOrdersBySeller,

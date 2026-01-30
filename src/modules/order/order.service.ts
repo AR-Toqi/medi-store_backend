@@ -3,6 +3,24 @@ import { OrderStatus, Role } from "../../../generated/prisma/enums";
 import type { CreateOrderPayload, UpdateOrderStatusPayload, GetOrdersParams } from "../../types/order.d";
 
 /**
+ * Format address object into a readable shipping address string
+ */
+const formatAddressToString = (address: any): string => {
+  const parts = [
+    address.fullName,
+    address.addressLine,
+  ];
+
+  if (address.area) parts.push(address.area);
+  parts.push(address.city);
+  parts.push(address.state);
+  if (address.postalCode) parts.push(address.postalCode);
+  if (address.country) parts.push(address.country);
+
+  return parts.filter(Boolean).join(", ");
+};
+
+/**
  * Create a new order
  */
 export const createOrder = async (payload: CreateOrderPayload) => {
@@ -78,6 +96,87 @@ export const createOrder = async (payload: CreateOrderPayload) => {
         },
       });
     }
+
+    return newOrder;
+  });
+
+  return order;
+};
+
+/**
+ * Create order from user's cart items (checkout)
+ */
+export const createOrderFromCart = async (customerId: string, payload: { addressId: string; paymentMethod?: string; customerNote?: string }) => {
+  const { addressId } = payload;
+
+  // Fetch and validate address
+  const address = await prisma.address.findUnique({
+    where: { id: addressId },
+  });
+
+  if (!address) {
+    throw new Error("Address not found");
+  }
+
+  if (address.userId !== customerId) {
+    throw new Error("Access denied. Address does not belong to you");
+  }
+
+  // Format address into shipping address string
+  const shippingAddress = formatAddressToString(address);
+  // Fetch cart items
+  const cartItems = await prisma.cartItem.findMany({
+    where: { userId: customerId },
+    include: { medicine: true },
+  });
+
+  if (!cartItems || cartItems.length === 0) {
+    throw new Error("Cart is empty");
+  }
+
+  // Validate stock and calculate total
+  let totalAmount = 0;
+  const orderItems = cartItems.map((ci) => {
+    const med = ci.medicine;
+    if (!med) {
+      throw new Error(`Medicine not found for cart item ${ci.id}`);
+    }
+    if (med.stock < ci.quantity) {
+      throw new Error(`Insufficient stock for medicine: ${med.name}`);
+    }
+    totalAmount += Number(med.price) * ci.quantity;
+    return {
+      medicineId: med.id,
+      quantity: ci.quantity,
+      price: Number(med.price),
+    };
+  });
+
+  // Create order and related items in a transaction
+  const order = await prisma.$transaction(async (tx) => {
+    const newOrder = await tx.order.create({
+      data: {
+        customerId,
+        totalAmount,
+        shippingAddress,
+        paymentMethod: payload.paymentMethod || "COD",
+      },
+    });
+
+    await tx.orderItem.createMany({
+      data: orderItems.map((it) => ({ orderId: newOrder.id, ...it })),
+    });
+
+    // Decrement stock for each medicine
+    for (const ci of cartItems) {
+      await tx.medicine.update({
+        where: { id: ci.medicineId },
+        data: { stock: { decrement: ci.quantity } },
+      });
+    }
+
+    // Clear user's cart
+    await tx.cartItem.deleteMany({ where: { userId: customerId } });
 
     return newOrder;
   });
@@ -487,6 +586,7 @@ export const getCustomerOrders = async (customerId: string, params: GetOrdersPar
 
 export const orderService = {
   createOrder,
+  createOrderFromCart,
   getAllOrders,
   getOrdersBySeller,
   getOrderDetails,
