@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
 
 export async function sendMail(options: SendMailOptions) {
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'no-reply@medistore.com',
+    from: process.env.APP_USER || 'no-reply@medistore.com',
     ...options,
   });
 }

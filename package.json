@@ -7,7 +7,8 @@
     "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:push": "npx prisma db push",
-    "seed:admin": "npx tsx src/lib/seedAdmin.ts"
+    "seed:admin": "npx tsx src/lib/seedAdmin.ts",
+    "build": "prisma generate && tsup src/server.ts --format esm --platform node --target node20 --outDir api --external pg-native"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +34,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "nodemailer": "^7.0.13",
-    "pg": "^8.17.2"
+    "pg": "^8.17.2",
+    "tsup": "^8.5.1"
   }
 }

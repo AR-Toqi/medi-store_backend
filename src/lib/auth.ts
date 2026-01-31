@@ -125,7 +125,7 @@ export const auth = betterAuth({
 </html>
 `
     const info = await transporter.sendMail({
-    from: '"Your APP" <${process.env.SMTP_FROM}>',
+    from: '"Your APP" <${process.env.APP_USER}>',
     to: user.email,
     subject: "Plz verify your email !",
     text: "Hello world?", // Plain-text version of the message
