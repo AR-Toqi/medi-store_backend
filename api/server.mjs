@@ -3266,6 +3266,19 @@ var init_address_router = __esm({
   }
 });
 
+// src/middlewares/notFound.middleware.ts
+var notFound;
+var init_notFound_middleware = __esm({
+  "src/middlewares/notFound.middleware.ts"() {
+    "use strict";
+    notFound = (req, res) => res.status(404).json({
+      message: "Route not found",
+      path: req.originalUrl,
+      date: Date.now()
+    });
+  }
+});
+
 // src/app.ts
 import express from "express";
 import cors from "cors";
@@ -3284,6 +3297,7 @@ var init_app = __esm({
     init_reviews_router();
     init_admin_router();
     init_address_router();
+    init_notFound_middleware();
     app = express();
     app.all("/api/auth/*splat", toNodeHandler(auth));
     app.use(cors(
@@ -3293,6 +3307,9 @@ var init_app = __esm({
       }
     ));
     app.use(express.json());
+    app.get("/", (_, res) => {
+      res.json({ status: "OK", message: "MediStore API running" });
+    });
     app.use("/api/auth", userRoutes);
     app.use("/api/categories", categoryRoutes);
     app.use("/api/medicines", medicineRoutes);
@@ -3302,9 +3319,7 @@ var init_app = __esm({
     app.use("/api/reviews", reviewRoutes);
     app.use("/api/addresses", addressRoutes);
     app.use("/api/admin", adminRoutes);
-    app.get("/", (_, res) => {
-      res.json({ status: "OK", message: "MediStore API running" });
-    });
+    app.use(notFound);
     app_default = app;
   }
 });

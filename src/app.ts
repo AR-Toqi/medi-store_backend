@@ -11,6 +11,7 @@ import { cartItemRoutes } from "./modules/cartItem/cartItem.router";
 import { reviewRoutes } from "./modules/reviews/reviews.router";
 import { adminRoutes } from "./modules/admin/admin.router";
 import { addressRoutes } from "./modules/address/address.router";
+import { notFound } from "./middlewares/notFound.middleware";
 
 const app: Application = express();
 
@@ -23,6 +24,9 @@ app.use(cors(
 ));
 app.use(express.json());
 
+app.get("/", (_, res) => {
+  res.json({ status: "OK", message: "MediStore API running" });
+});
 app.use("/api/auth", userRoutes);
 
 app.use("/api/categories", categoryRoutes);
@@ -34,8 +38,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/admin", adminRoutes);
 
-app.get("/", (_, res) => {
-  res.json({ status: "OK", message: "MediStore API running" });
-});
+//* Not found handler
+app.use (notFound);
 
 export default app;
