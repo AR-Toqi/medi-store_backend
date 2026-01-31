@@ -13,7 +13,7 @@ This backend allows users to:
 
 ## 🚀 Live Project
 **Backend URL:**  
-https://backend-three-pi-86.vercel.app/
+https://medistore-backend.vercel.app/
 
 **GitHub Repository:**  
 https://github.com/AR-Toqi/medi-store_backend
@@ -110,7 +110,6 @@ Authentication in MediStore is handled using **Better Auth**.
 `GET    /api/admin/users`           → Get all users
 `PATCH  /api/admin/users/:id`       → Update user status
 `DELETE /api/admin/users/:userId`   → Delete user
-`DELETE /api/users/me`              → Delete own account
 
 ---
 
