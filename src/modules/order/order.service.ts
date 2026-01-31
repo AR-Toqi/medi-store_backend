@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { OrderStatus, Role } from "../../../generated/prisma/enums";
 import type { CreateOrderPayload, UpdateOrderStatusPayload, GetOrdersParams } from "../../types/order.d";
+import { sendMail } from "../../utils/email";
 
 /**
  * Format address object into a readable shipping address string
@@ -100,6 +101,15 @@ export const createOrder = async (payload: CreateOrderPayload) => {
     return newOrder;
   });
 
+  // Send order placed email
+  const customerData = await prisma.user.findUnique({ where: { id: payload.customerId } });
+  if (customerData?.email) {
+    await sendMail({
+      to: customerData.email,
+      subject: "Order Placed Successfully",
+      html: `<p>Dear ${customerData.name || "Customer"},</p><p>Your order (ID: ${order.id}) has been placed successfully. We will notify you as it progresses.</p>`
+    });
+  }
   return order;
 };
 
@@ -526,6 +536,29 @@ export const updateOrderStatus = async (payload: UpdateOrderStatusPayload) => {
     },
   });
 
+  // Send email to customer on status change
+  if (updatedOrder.customer?.email) {
+    let subject = "Order Update";
+    let html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) status is now <b>${status}</b>.</p>`;
+    if (status === OrderStatus.SHIPPED) {
+      subject = "Your Order Has Shipped";
+      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>shipped</b> and is on its way!</p>`;
+    } else if (status === OrderStatus.DELIVERED) {
+      subject = "Order Delivered";
+      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>delivered</b>. Thank you for shopping with us!</p>`;
+    } else if (status === OrderStatus.CONFIRMED) {
+      subject = "Order Confirmed";
+      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>confirmed</b> and is being prepared.</p>`;
+    } else if (status === OrderStatus.CANCELLED) {
+      subject = "Order Cancelled";
+      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>cancelled</b>. If you have questions, please contact support.</p>`;
+    }
+    await sendMail({
+      to: updatedOrder.customer.email,
+      subject,
+      html,
+    });
+  }
   return updatedOrder;
 };
 

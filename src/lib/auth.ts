@@ -2,20 +2,20 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import nodemailer from "nodemailer";
-// If your Prisma file is located elsewhere, you can change the path
-// import { PrismaClient } from "../../generated/prisma/client";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
   secure: false, // Use true for port 465, false for port 587
   auth: {
     user: process.env.APP_USER,
     pass: process.env.APP_PASS,
   },
-});
+} as SMTPTransport.Options);
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
-        provider: "postgresql", // or "mysql", "postgresql", ...etc
+        provider: "postgresql",
     }),
     emailAndPassword: { 
     enabled: true, 
@@ -125,7 +125,7 @@ export const auth = betterAuth({
 </html>
 `
     const info = await transporter.sendMail({
-    from: '"Your APP" <${process.env.APP_USER}>',
+    from: '"Your APP" <${process.env.SMTP_FROM}>',
     to: user.email,
     subject: "Plz verify your email !",
     text: "Hello world?", // Plain-text version of the message
