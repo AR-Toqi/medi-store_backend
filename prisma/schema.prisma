@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -31,6 +31,7 @@ model User {
   id      String   @id @default(uuid())
   name    String
   email   String   @unique
+  password String   // Added for custom auth
   orders  Order[]  @relation("CustomerOrders")
   reviews Review[]
   cartItems CartItem[]

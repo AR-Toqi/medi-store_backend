@@ -3310,7 +3310,7 @@ var init_app = __esm({
     app.get("/", (_, res) => {
       res.json({ status: "OK", message: "MediStore API running" });
     });
-    app.use("/api/auth", userRoutes);
+    app.use("/api", userRoutes);
     app.use("/api/categories", categoryRoutes);
     app.use("/api/medicines", medicineRoutes);
     app.use("/api/sellers", sellerProfileRoutes);

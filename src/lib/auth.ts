@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { jwt, openAPI } from "better-auth/plugins";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -13,39 +14,56 @@ const transporter = nodemailer.createTransport({
     pass: process.env.APP_PASS,
   },
 } as SMTPTransport.Options);
+
 export const auth = betterAuth({
-    database: prismaAdapter(prisma, {
-        provider: "postgresql",
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  session: {
+    strategy: "jwt",
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+  },
+  trustedOrigins: [process.env.APP_URL!],
+  plugins: [
+    jwt({
+        jwt: {
+            expirationTime: "1h", // Access token expiry
+        },
+        refreshToken: {
+          enabled: true,
+          expirationTime: "7d", // Refresh token expiry
+        }
     }),
-    emailAndPassword: { 
-    enabled: true, 
-    requireEmailVerification: true
-  }, 
-  trustedOrigins: [
-    process.env.APP_URL!
+    openAPI(),
   ],
   user: {
     additionalFields: {
       role: {
         type: "string",
         defaultValue: "CUSTOMER",
-        required: false
+        required: false,
       },
       isBanned: {
         type: "boolean",
         defaultValue: false,
-        required: false
+        required: false,
       },
     },
   },
-
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    sendVerificationEmail: async ({ user, url, token }) =>{
-        try {
-          const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
-          const html = `
+    sendVerificationEmail: async ({ user, url, token }) => {
+      try {
+        const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
+        const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,21 +141,20 @@ export const auth = betterAuth({
 
 </body>
 </html>
-`
-    const info = await transporter.sendMail({
-    from: '"Your APP" <${process.env.APP_USER}>',
-    to: user.email,
-    subject: "Plz verify your email !",
-    text: "Hello world?", // Plain-text version of the message
-    html: html, // HTML version of the message
-  });
+`;
+        const info = await transporter.sendMail({
+          from: `"Your APP" <${process.env.APP_USER}>`,
+          to: user.email,
+          subject: "Plz verify your email !",
+          text: "Hello world?", // Plain-text version of the message
+          html: html, // HTML version of the message
+        });
 
-  console.log(" Verification email sent successfully:", info.messageId);
-        } catch (error) {
-          console.error(" Failed to send verification email:", error);
-          throw error;
-        }
-    }
-  }
-
-});
+        console.log(" Verification email sent successfully:", info.messageId);
+      } catch (error) {
+        console.error(" Failed to send verification email:", error);
+        throw error;
+      }
+    },
+  },
+});
