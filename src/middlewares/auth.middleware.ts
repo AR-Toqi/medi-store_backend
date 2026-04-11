@@ -9,6 +9,7 @@ export interface AuthRequest extends Request {
     email: string;
     role: string;
     isBanned: boolean;
+    emailVerified: boolean;
   };
 }
 
@@ -80,6 +81,7 @@ export const requireAuth = async (
       email: user.email,
       role: user.role as string,
       isBanned: user.isBanned as boolean,
+      emailVerified: user.emailVerified as boolean,
     };
 
     next();

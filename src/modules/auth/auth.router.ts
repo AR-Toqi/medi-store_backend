@@ -9,6 +9,9 @@ router.post("/register", authController.signUp);
 //* Login
 router.post("/login", authController.signIn);
 
+//* Verify Email
+router.post("/verify-email", authController.verifyEmail);
+
 //* Logout
 router.post("/logout", authController.signOut);
 

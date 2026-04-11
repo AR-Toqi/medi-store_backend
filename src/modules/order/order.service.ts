@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { OrderStatus, Role } from "../../../generated/prisma";
 import type { CreateOrderPayload, UpdateOrderStatusPayload, GetOrdersParams } from "../../types/order.d";
-import { sendMail } from "../../utils/email";
+import { sendEmail } from "../../app/utils/email";
 import httpStatus from "http-status";
 import AppError from "../../app/errors/AppError";
 
@@ -98,7 +98,7 @@ const createOrder = async (payload: CreateOrderPayload) => {
   });
 
   if (customer?.email) {
-    await sendMail({
+    await sendEmail({
       to: customer.email,
       subject: "Order Placed Successfully",
       html: `<p>Dear ${customer.name || "Customer"},</p><p>Your order (ID: ${order.id}) has been placed successfully. We will notify you as it progresses.</p>`
@@ -376,7 +376,7 @@ const updateOrderStatus = async (payload: UpdateOrderStatusPayload) => {
   });
 
   if (updatedOrder.customer?.email) {
-    await sendMail({
+    await sendEmail({
       to: updatedOrder.customer.email,
       subject: `Order Update - ${status}`,
       html: `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) status is now <b>${status}</b>.</p>`

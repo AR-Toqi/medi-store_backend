@@ -58,8 +58,20 @@ const signOut = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+  const result = await authService.verifyEmail(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Email verified successfully",
+    data: result,
+  });
+});
+
 export const authController = {
   signUp,
   signIn,
   signOut,
+  verifyEmail,
 };
