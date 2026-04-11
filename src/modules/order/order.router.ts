@@ -9,10 +9,11 @@ const router = Router();
 //* Customer routes (authenticated users)
 router.post("/", requireAuth, orderController.createOrder);
 router.get("/my-orders", requireAuth, orderController.getMyOrders);
-router.post("/checkout", requireAuth, orderController.checkout);
+router.post("/checkout", requireAuth, orderController.createOrder);
 
 //* Shared routes (customer and admin reach this)
 router.get("/:id", requireAuth, orderController.getOrderDetails);
+router.patch("/:id/cancel", requireAuth, orderController.cancelMyOrder);
 router.put("/:id/status", requireAuth, roleGuard(USER_ROLE.ADMIN), orderController.updateOrderStatus);
 
 export const orderRoutes = router;

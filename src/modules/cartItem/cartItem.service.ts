@@ -1,5 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import type { CreateCartItemPayload } from "../../types/cartItem.d";
+import httpStatus from "http-status";
+import AppError from "../../app/errors/AppError";
 
 /**
  * Add item to cart or update quantity if already exists
@@ -13,7 +15,7 @@ export const addToCart = async (payload: CreateCartItemPayload) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   // Validate medicine exists and has stock
@@ -35,15 +37,15 @@ export const addToCart = async (payload: CreateCartItemPayload) => {
   });
 
   if (!medicine) {
-    throw new Error("Medicine not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Medicine not found");
   }
 
   if (medicine.stock < quantity) {
-    throw new Error(`Insufficient stock. Available: ${medicine.stock}, Requested: ${quantity}`);
+    throw new AppError(httpStatus.BAD_REQUEST, `Insufficient stock. Available: ${medicine.stock}, Requested: ${quantity}`);
   }
 
   if (quantity <= 0) {
-    throw new Error("Quantity must be greater than 0");
+    throw new AppError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0");
   }
 
   // Check if item already exists in cart
@@ -61,7 +63,7 @@ export const addToCart = async (payload: CreateCartItemPayload) => {
     const newQuantity = existingCartItem.quantity + quantity;
 
     if (medicine.stock < newQuantity) {
-      throw new Error(`Insufficient stock. Available: ${medicine.stock}, Total in cart would be: ${newQuantity}`);
+      throw new AppError(httpStatus.BAD_REQUEST, `Insufficient stock. Available: ${medicine.stock}, Total in cart would be: ${newQuantity}`);
     }
 
     const updatedCartItem = await prisma.cartItem.update({
@@ -135,7 +137,7 @@ export const getCartItems = async (userId: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   const cartItems = await prisma.cartItem.findMany({
@@ -202,11 +204,11 @@ export const updateCartItemQuantity = async (userId: string, medicineId: string,
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   if (quantity <= 0) {
-    throw new Error("Quantity must be greater than 0");
+    throw new AppError(httpStatus.BAD_REQUEST, "Quantity must be greater than 0");
   }
 
   // Check if cart item exists and belongs to user
@@ -223,7 +225,7 @@ export const updateCartItemQuantity = async (userId: string, medicineId: string,
   });
 
   if (!cartItem) {
-    throw new Error("Cart item not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Cart item not found");
   }
 
   // Validate stock availability
@@ -274,7 +276,7 @@ export const removeFromCart = async (userId: string, medicineId: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   // Check if cart item exists and belongs to user
@@ -288,7 +290,7 @@ export const removeFromCart = async (userId: string, medicineId: string) => {
   });
 
   if (!cartItem) {
-    throw new Error("Cart item not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Cart item not found");
   }
 
   // Delete cart item
@@ -314,7 +316,7 @@ export const clearCart = async (userId: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
 
   // Delete all cart items for user

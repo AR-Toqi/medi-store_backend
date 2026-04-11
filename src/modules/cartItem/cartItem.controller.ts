@@ -1,126 +1,98 @@
 import { Response } from "express";
+import httpStatus from "http-status";
+import catchAsync from "../../app/errors/catchAsync";
+import sendResponse from "../../app/utils/sendResponse";
 import { AuthRequest } from "../../middlewares/auth.middleware";
 import { cartItemService } from "./cartItem.service";
 
 /**
- * CUSTOMER → Add item to cart
+ * Add an item to the cart
  */
-const addToCart = async (req: AuthRequest, res: Response) => {
-  try {
-    const { medicineId, quantity } = req.body;
-    const userId = req.user?.id;
+const addToCart = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const result = await cartItemService.addToCart({
+    ...req.body,
+    userId,
+  });
 
-    const cartItem = await cartItemService.addToCart({
-      userId: userId as string,
-      medicineId,
-      quantity,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Item added to cart successfully",
-      data: cartItem,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to add item to cart",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Item added to cart",
+    data: result,
+  });
+});
 
 /**
- * CUSTOMER → Get cart items
+ * Get all cart items for the current user
  */
-const getCartItems = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
+const getCartItems = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const result = await cartItemService.getCartItems(userId);
 
-    const cart = await cartItemService.getCartItems(userId as string);
-
-    return res.status(200).json({
-      success: true,
-      message: "Cart items fetched successfully",
-      data: cart,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to fetch cart items",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Cart fetched successfully",
+    data: result.items,
+    meta: result.summary as any,
+  });
+});
 
 /**
- * CUSTOMER → Update cart item quantity
+ * Update quantity of a cart item
  */
-const updateCartItemQuantity = async (req: AuthRequest, res: Response) => {
-  try {
-    const { medicineId } = req.params;
-    const { quantity } = req.body;
-    const userId = req.user?.id;
+const updateCartItemQuantity = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const { medicineId } = req.params;
+  const { quantity } = req.body;
 
-    const updatedCartItem = await cartItemService.updateCartItemQuantity(
-      userId as string,
-      medicineId as string,
-      quantity
-    );
+  const result = await cartItemService.updateCartItemQuantity(
+    userId,
+    medicineId as string,
+    quantity
+  );
 
-    return res.status(200).json({
-      success: true,
-      message: "Cart item quantity updated successfully",
-      data: updatedCartItem,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to update cart item quantity",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Cart updated successfully",
+    data: result,
+  });
+});
 
 /**
- * CUSTOMER → Remove item from cart
+ * Remove an item from the cart
  */
-const removeFromCart = async (req: AuthRequest, res: Response) => {
-  try {
-    const { medicineId } = req.params;
-    const userId = req.user?.id;
+const removeFromCart = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const { medicineId } = req.params;
 
-    const result = await cartItemService.removeFromCart(userId as string, medicineId as string);
+  await cartItemService.removeFromCart(userId, medicineId as string);
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error: any) {
-    return res.status(404).json({
-      success: false,
-      message: error.message || "Failed to remove item from cart",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Item removed from cart",
+    data: null,
+  });
+});
 
 /**
- * CUSTOMER → Clear entire cart
+ * Clear the entire cart
  */
-const clearCart = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
+const clearCart = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
 
-    const result = await cartItemService.clearCart(userId as string);
+  await cartItemService.clearCart(userId);
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to clear cart",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Cart cleared successfully",
+    data: null,
+  });
+});
 
 export const cartItemController = {
   addToCart,

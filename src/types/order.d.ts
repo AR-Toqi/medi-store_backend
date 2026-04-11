@@ -1,10 +1,11 @@
-import type { Role, OrderStatus } from "../../generated/prisma/enums";
+import type { Role, OrderStatus } from "../../generated/prisma";
+
 export interface CreateOrderPayload {
   customerId: string;
   items: OrderItemPayload[];
   shippingAddress: string;
-  paymentMethod?: string;
-  customerNote?: string;
+  paymentMethod?: string | undefined;
+  customerNote?: string | undefined;
 }
 
 export interface OrderItemPayload {
@@ -20,14 +21,14 @@ export interface UpdateOrderStatusPayload {
 }
 
 export interface GetOrdersParams {
-  page?: number;
-  limit?: number;
-  status?: OrderStatus;
-  search?: string;
+  page?: number | undefined;
+  limit?: number | undefined;
+  status?: OrderStatus | undefined;
+  search?: string | undefined;
 }
 
 export interface CheckoutPayload {
   addressId: string;
-  paymentMethod?: string;
-  customerNote?: string;
+  paymentMethod?: string | undefined;
+  customerNote?: string | undefined;
 }

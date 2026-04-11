@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { OrderStatus } from "../../../generated/prisma/enums";
+import { OrderStatus } from "../../../generated/prisma";
 
 export interface CreateReviewPayload {
   medicineId: string;

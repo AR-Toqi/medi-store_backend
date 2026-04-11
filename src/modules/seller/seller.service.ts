@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { OrderStatus } from "../../../generated/prisma/enums";
+import { OrderStatus } from "../../../generated/prisma";
 
 /**
  * Get seller profile by user ID
@@ -71,7 +71,7 @@ const getDashboardStats = async (sellerId: string) => {
   // 4. Pending Orders count
   const pendingOrders = await prisma.order.count({
     where: {
-      status: OrderStatus.PENDING,
+      status: OrderStatus.PLACED,
       items: {
         some: {
           medicine: {

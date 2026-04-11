@@ -58,7 +58,7 @@ const getAllOrders = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: "All orders fetched successfully",
     data: result.data,
-    // meta: result.meta, // Note: sendResponse doesn't currently support meta in its type, I'll fix it if needed or just send data
+    meta: result.meta,
   });
 });
 
@@ -78,6 +78,7 @@ const getAllMedicines = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: "All medicines fetched successfully",
     data: result.data,
+    meta: result.meta,
   });
 });
 
@@ -88,6 +89,17 @@ const getAllSellers = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: "Sellers fetched successfully",
     data: result,
+  });
+});
+
+const deleteSeller = catchAsync(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  await adminService.deleteSeller(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Seller profile deleted successfully",
+    data: null,
   });
 });
 
@@ -103,7 +115,7 @@ const createCategory = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
-  const result = await categoryService.getAllCategories();
+  const result = await categoryService.getAllCategories(true);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -141,6 +153,7 @@ export const adminController = {
   getAllOrders,
   getAllMedicines,
   getAllSellers,
+  deleteSeller,
   createCategory,
   getAllCategories,
   updateCategory,

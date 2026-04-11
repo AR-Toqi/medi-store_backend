@@ -1,142 +1,111 @@
 import { Response } from "express";
+import httpStatus from "http-status";
+import catchAsync from "../../app/errors/catchAsync";
+import sendResponse from "../../app/utils/sendResponse";
 import { AuthRequest } from "../../middlewares/auth.middleware";
 import { reviewService } from "./reviews.service";
 
 /**
- * CUSTOMER → Create a review for a purchased medicine
+ * CUSTOMER: Create a review for a medicine
  */
-const createReview = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const payload = req.body;
+const createReview = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const result = await reviewService.createReview(userId, req.body);
 
-    const review = await reviewService.createReview(userId as string, payload);
-
-    return res.status(201).json({
-      success: true,
-      message: "Review created successfully",
-      data: review,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to create review",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Review submitted successfully",
+    data: result,
+  });
+});
 
 /**
- * PUBLIC → Get all reviews for a specific medicine
+ * PUBLIC: Get reviews for a medicine
  */
-const getReviewsByMedicine = async (req: AuthRequest, res: Response) => {
-  try {
-    const { medicineId } = req.params;
-    const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+const getReviewsByMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { medicineId } = req.params;
+  const page = req.query.page ? parseInt(req.query.page as string) : 1;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
-    const result = await reviewService.getReviewsByMedicine(medicineId as string, page, limit);
+  const result = await reviewService.getReviewsByMedicine(medicineId as string, page, limit);
 
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to fetch reviews",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Reviews fetched successfully",
+    data: result.reviews,
+    meta: result.pagination as any,
+  });
+});
 
 /**
- * CUSTOMER → Get my own reviews
+ * CUSTOMER: Get my own reviews
  */
-const getMyReviews = async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const page = req.query.page ? parseInt(req.query.page as string) : 1;
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+const getMyReviews = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const page = req.query.page ? parseInt(req.query.page as string) : 1;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
-    const result = await reviewService.getMyReviews(userId as string, page, limit);
+  const result = await reviewService.getMyReviews(userId, page, limit);
 
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to fetch reviews",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Your reviews fetched successfully",
+    data: result.reviews,
+    meta: result.pagination as any,
+  });
+});
 
 /**
- * CUSTOMER → Update my own review
+ * CUSTOMER: Update my review
  */
-const updateReview = async (req: AuthRequest, res: Response) => {
-  try {
-    const { reviewId } = req.params;
-    const userId = req.user?.id;
-    const payload = req.body;
+const updateReview = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const { id } = req.params;
 
-    const review = await reviewService.updateReview(reviewId as string, userId as string, payload);
+  const result = await reviewService.updateReview(id as string, userId, req.body);
 
-    return res.status(200).json({
-      success: true,
-      message: "Review updated successfully",
-      data: review,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to update review",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Review updated successfully",
+    data: result,
+  });
+});
 
 /**
- * CUSTOMER → Delete my own review
+ * CUSTOMER: Delete my review
  */
-const deleteReview = async (req: AuthRequest, res: Response) => {
-  try {
-    const { reviewId } = req.params;
-    const userId = req.user?.id;
+const deleteReview = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const { id } = req.params;
 
-    const result = await reviewService.deleteReview(reviewId as string, userId as string);
+  await reviewService.deleteReview(id as string, userId);
 
-    return res.status(200).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to delete review",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Review deleted successfully",
+    data: null,
+  });
+});
 
 /**
- * PUBLIC → Get rating statistics for a medicine
+ * PUBLIC: Get average rating stats for a medicine
  */
-const getMedicineRatingStats = async (req: AuthRequest, res: Response) => {
-  try {
-    const { medicineId } = req.params;
+const getMedicineRatingStats = catchAsync(async (req: AuthRequest, res: Response) => {
+  const { medicineId } = req.params;
+  const result = await reviewService.getMedicineRatingStats(medicineId as string);
 
-    const stats = await reviewService.getMedicineRatingStats(medicineId as string);
-
-    return res.status(200).json({
-      success: true,
-      data: stats,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to fetch rating statistics",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Rating statistics fetched successfully",
+    data: result,
+  });
+});
 
 export const reviewController = {
   createReview,

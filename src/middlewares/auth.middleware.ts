@@ -18,12 +18,30 @@ export const requireAuth = async (
   next: NextFunction
 ) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1] || req.cookies.accessToken;
+    const authHeader = req.headers.authorization;
+    let token = "";
 
-    if (!token) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1] || "";
+    } else if (req.cookies.accessToken) {
+      token = req.cookies.accessToken || "";
+    }
+
+    if (
+      !token ||
+      token === "undefined" ||
+      token === "null" ||
+      token === "{{accessToken}}" ||
+      token.trim() === "" ||
+      token.split(".").length !== 3
+    ) {
+      const message = token === "{{accessToken}}" 
+        ? "Unauthorized - Postman variable {{accessToken}} is not set. Please run the Login request first."
+        : "Unauthorized - Invalid or malformed token format";
+
       return res.status(401).json({
         success: false,
-        message: "Unauthorized - No token provided",
+        message,
       });
     }
 

@@ -7,7 +7,7 @@ import { USER_ROLE } from "../../types/role";
 const router = Router();
 
 //* get current user
-router.get("/", requireAuth, userController.getCurrentUser);
+router.get("/me", requireAuth, userController.getCurrentUser);
 
 //* update user
 router.put("/me", requireAuth, userController.updateUser);

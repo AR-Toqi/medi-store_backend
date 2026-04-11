@@ -1,42 +1,41 @@
 export interface CreateMedicineInput {
   name: string;
   categoryId: string;
-  description?: string;
+  description?: string | undefined;
   price: number;
   stock: number;
-  manufacturer?: string;
-  dosage?: string; // e.g. "500mg"
-  sellerId?: string;
+  manufacturer?: string | undefined;
+  dosage?: string | undefined;
+  sellerId?: string | undefined;
+  isFeatured?: boolean | undefined;
 }
-
 
 export interface UpdateMedicineInput {
-  name?: string;
-  categoryId?: string;
-
-  description?: string;
-
-  price?: number;
-  stock?: number;
-
-  manufacturer?: string;
-  dosage?: string;
+  name?: string | undefined;
+  categoryId?: string | undefined;
+  description?: string | undefined;
+  price?: number | undefined;
+  stock?: number | undefined;
+  manufacturer?: string | undefined;
+  dosage?: string | undefined;
+  isFeatured?: boolean | undefined;
 }
 
-export interface MedicineQueryInput {
-  search?: string;
-  categoryId?: string;
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
+export interface MedicineUpdateData extends UpdateMedicineInput {
+  slug?: string | undefined;
 }
 
 export interface GetMedicinesParams {
-  page?: number;
-  limit?: number;
-  search?: string;
+  page?: number | undefined;
+  limit?: number | undefined;
+  search?: string | undefined;
+  categoryId?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  manufacturer?: string | undefined;
+  isFeatured?: boolean | string | undefined;
 }
+
 export interface MedicineParams {
   id: string;
 }

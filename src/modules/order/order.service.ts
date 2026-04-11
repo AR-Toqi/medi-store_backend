@@ -1,7 +1,9 @@
 import { prisma } from "../../lib/prisma";
-import { OrderStatus, Role } from "../../../generated/prisma/enums";
+import { OrderStatus, Role } from "../../../generated/prisma";
 import type { CreateOrderPayload, UpdateOrderStatusPayload, GetOrdersParams } from "../../types/order.d";
 import { sendMail } from "../../utils/email";
+import httpStatus from "http-status";
+import AppError from "../../app/errors/AppError";
 
 /**
  * Format address object into a readable shipping address string
@@ -24,51 +26,47 @@ const formatAddressToString = (address: any): string => {
 /**
  * Create a new order
  */
-export const createOrder = async (payload: CreateOrderPayload) => {
-  // Validate customer exists
+const createOrder = async (payload: CreateOrderPayload) => {
   const customer = await prisma.user.findUnique({
     where: { id: payload.customerId },
   });
 
   if (!customer) {
-    throw new Error("Customer not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Customer not found");
   }
 
-  // Validate all medicines exist and calculate total
-  let totalAmount = 0;
-  const orderItems: Array<{
-    medicineId: string;
-    quantity: number;
-    price: number;
-  }> = [];
-
-  for (const item of payload.items) {
-    const medicine = await prisma.medicine.findUnique({
-      where: { id: item.medicineId },
-      include: { seller: true },
-    });
-
-    if (!medicine) {
-      throw new Error(`Medicine with ID ${item.medicineId} not found`);
-    }
-
-    if (medicine.stock < item.quantity) {
-      throw new Error(`Insufficient stock for medicine: ${medicine.name}`);
-    }
-
-    const itemTotal = Number(medicine.price) * item.quantity;
-    totalAmount += itemTotal;
-
-    orderItems.push({
-      medicineId: item.medicineId,
-      quantity: item.quantity,
-      price: Number(medicine.price),
-    });
-  }
-
-  // Create order with items in a transaction
   const order = await prisma.$transaction(async (tx) => {
-    // Create the order
+    let totalAmount = 0;
+    const orderItems: Array<{
+      medicineId: string;
+      quantity: number;
+      price: number;
+    }> = [];
+
+    // 1. Double-check stock inside transaction
+    for (const item of payload.items) {
+      const medicine = await tx.medicine.findUnique({
+        where: { id: item.medicineId },
+      });
+
+      if (!medicine) {
+        throw new AppError(httpStatus.NOT_FOUND, `Medicine with ID ${item.medicineId} not found`);
+      }
+
+      if (medicine.stock < item.quantity) {
+        throw new AppError(httpStatus.BAD_REQUEST, `Insufficient stock for medicine: ${medicine.name}`);
+      }
+
+      const itemTotal = Number(medicine.price) * item.quantity;
+      totalAmount += itemTotal;
+
+      orderItems.push({
+        medicineId: item.medicineId,
+        quantity: item.quantity,
+        price: Number(medicine.price),
+      });
+    }
+
     const newOrder = await tx.order.create({
       data: {
         customerId: payload.customerId,
@@ -78,7 +76,6 @@ export const createOrder = async (payload: CreateOrderPayload) => {
       },
     });
 
-    // Create order items
     await tx.orderItem.createMany({
       data: orderItems.map(item => ({
         orderId: newOrder.id,
@@ -86,8 +83,7 @@ export const createOrder = async (payload: CreateOrderPayload) => {
       })),
     });
 
-    // Update medicine stock
-    for (const item of payload.items) {
+    for (const item of orderItems) {
       await tx.medicine.update({
         where: { id: item.medicineId },
         data: {
@@ -101,13 +97,11 @@ export const createOrder = async (payload: CreateOrderPayload) => {
     return newOrder;
   });
 
-  // Send order placed email
-  const customerData = await prisma.user.findUnique({ where: { id: payload.customerId } });
-  if (customerData?.email) {
+  if (customer?.email) {
     await sendMail({
-      to: customerData.email,
+      to: customer.email,
       subject: "Order Placed Successfully",
-      html: `<p>Dear ${customerData.name || "Customer"},</p><p>Your order (ID: ${order.id}) has been placed successfully. We will notify you as it progresses.</p>`
+      html: `<p>Dear ${customer.name || "Customer"},</p><p>Your order (ID: ${order.id}) has been placed successfully. We will notify you as it progresses.</p>`
     });
   }
   return order;
@@ -116,54 +110,63 @@ export const createOrder = async (payload: CreateOrderPayload) => {
 /**
  * Create order from user's cart items (checkout)
  */
-export const createOrderFromCart = async (customerId: string, payload: { addressId: string; paymentMethod?: string; customerNote?: string }) => {
+const createOrderFromCart = async (customerId: string, payload: { addressId: string; paymentMethod?: string; customerNote?: string }) => {
   const { addressId } = payload;
 
-  // Fetch and validate address
   const address = await prisma.address.findUnique({
     where: { id: addressId },
   });
 
   if (!address) {
-    throw new Error("Address not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Address not found");
   }
 
   if (address.userId !== customerId) {
-    throw new Error("Access denied. Address does not belong to you");
+    throw new AppError(httpStatus.FORBIDDEN, "Access denied. Address does not belong to you");
   }
 
-  // Format address into shipping address string
   const shippingAddress = formatAddressToString(address);
-  // Fetch cart items
   const cartItems = await prisma.cartItem.findMany({
     where: { userId: customerId },
     include: { medicine: true },
   });
 
   if (!cartItems || cartItems.length === 0) {
-    throw new Error("Cart is empty");
+    throw new AppError(httpStatus.BAD_REQUEST, "Cart is empty");
   }
 
-  // Validate stock and calculate total
-  let totalAmount = 0;
-  const orderItems = cartItems.map((ci) => {
-    const med = ci.medicine;
-    if (!med) {
-      throw new Error(`Medicine not found for cart item ${ci.id}`);
-    }
-    if (med.stock < ci.quantity) {
-      throw new Error(`Insufficient stock for medicine: ${med.name}`);
-    }
-    totalAmount += Number(med.price) * ci.quantity;
-    return {
-      medicineId: med.id,
-      quantity: ci.quantity,
-      price: Number(med.price),
-    };
-  });
-
-  // Create order and related items in a transaction
   const order = await prisma.$transaction(async (tx) => {
+    let totalAmount = 0;
+    const orderItems: any[] = [];
+
+    // 1. Check stock for each item inside transaction
+    for (const ci of cartItems) {
+      const med = await tx.medicine.findUnique({
+        where: { id: ci.medicineId },
+      });
+
+      if (!med) {
+        throw new AppError(httpStatus.NOT_FOUND, `Medicine not found for cart item ${ci.id}`);
+      }
+
+      if (med.stock < ci.quantity) {
+        throw new AppError(httpStatus.BAD_REQUEST, `Insufficient stock for medicine: ${med.name}`);
+      }
+
+      totalAmount += Number(med.price) * ci.quantity;
+      orderItems.push({
+        medicineId: med.id,
+        quantity: ci.quantity,
+        price: Number(med.price),
+      });
+
+      // 2. Decrement stock
+      await tx.medicine.update({
+        where: { id: ci.medicineId },
+        data: { stock: { decrement: ci.quantity } },
+      });
+    }
+
     const newOrder = await tx.order.create({
       data: {
         customerId,
@@ -177,15 +180,6 @@ export const createOrderFromCart = async (customerId: string, payload: { address
       data: orderItems.map((it) => ({ orderId: newOrder.id, ...it })),
     });
 
-    // Decrement stock for each medicine
-    for (const ci of cartItems) {
-      await tx.medicine.update({
-        where: { id: ci.medicineId },
-        data: { stock: { decrement: ci.quantity } },
-      });
-    }
-
-    // Clear user's cart
     await tx.cartItem.deleteMany({ where: { userId: customerId } });
 
     return newOrder;
@@ -195,16 +189,14 @@ export const createOrderFromCart = async (customerId: string, payload: { address
 };
 
 /**
- * ADMIN: Get all orders with pagination and filtering
+ * ADMIN: Get all orders
  */
-export const getAllOrders = async (params: GetOrdersParams) => {
+const getAllOrders = async (params: GetOrdersParams) => {
   const page = params.page && params.page > 0 ? params.page : 1;
   const limit = params.limit && params.limit > 0 ? params.limit : 10;
   const search = params.search?.trim() || "";
 
   const skip = (page - 1) * limit;
-
-  // Build where condition
   const whereCondition: any = {};
 
   if (params.status) {
@@ -213,51 +205,21 @@ export const getAllOrders = async (params: GetOrdersParams) => {
 
   if (search) {
     whereCondition.OR = [
-      {
-        customer: {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      },
-      {
-        customer: {
-          email: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      },
-      {
-        id: {
-          contains: search,
-        },
-      },
+      { customer: { name: { contains: search, mode: "insensitive" } } },
+      { customer: { email: { contains: search, mode: "insensitive" } } },
+      { id: { contains: search } },
     ];
   }
 
-  // Get total count
-  const total = await prisma.order.count({
-    where: whereCondition,
-  });
+  const total = await prisma.order.count({ where: whereCondition });
 
-  // Get orders with details
   const orders = await prisma.order.findMany({
     where: whereCondition,
     skip,
     take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
     include: {
-      customer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
+      customer: { select: { id: true, name: true, email: true } },
       items: {
         include: {
           medicine: {
@@ -266,31 +228,17 @@ export const getAllOrders = async (params: GetOrdersParams) => {
               name: true,
               price: true,
               seller: {
-                select: {
-                  id: true,
-                  shopName: true,
-                  user: {
-                    select: {
-                      name: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                select: { id: true, shopName: true }
+              }
+            }
+          }
+        }
+      }
     },
   });
 
   return {
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     data: orders,
   };
 };
@@ -298,31 +246,16 @@ export const getAllOrders = async (params: GetOrdersParams) => {
 /**
  * SELLER: Get orders containing seller's medicines
  */
-export const getOrdersBySeller = async (sellerId: string, params: GetOrdersParams) => {
-  // Validate seller exists
-  const seller = await prisma.sellerProfile.findUnique({
-    where: { id: sellerId },
-  });
-
-  if (!seller) {
-    throw new Error("Seller not found");
-  }
-
+const getOrdersBySeller = async (sellerId: string, params: GetOrdersParams) => {
   const page = params.page && params.page > 0 ? params.page : 1;
   const limit = params.limit && params.limit > 0 ? params.limit : 10;
   const search = params.search?.trim() || "";
 
   const skip = (page - 1) * limit;
-
-  // Build where condition - orders that contain seller's medicines
   const whereCondition: any = {
     items: {
-      some: {
-        medicine: {
-          sellerId,
-        },
-      },
-    },
+      some: { medicine: { sellerId } }
+    }
   };
 
   if (params.status) {
@@ -331,51 +264,21 @@ export const getOrdersBySeller = async (sellerId: string, params: GetOrdersParam
 
   if (search) {
     whereCondition.OR = [
-      {
-        customer: {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      },
-      {
-        customer: {
-          email: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      },
-      {
-        id: {
-          contains: search,
-        },
-      },
+      { customer: { name: { contains: search, mode: "insensitive" } } },
+      { customer: { email: { contains: search, mode: "insensitive" } } },
+      { id: { contains: search } },
     ];
   }
 
-  // Get total count
-  const total = await prisma.order.count({
-    where: whereCondition,
-  });
+  const total = await prisma.order.count({ where: whereCondition });
 
-  // Get orders with details
   const orders = await prisma.order.findMany({
     where: whereCondition,
     skip,
     take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
     include: {
-      customer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
+      customer: { select: { id: true, name: true, email: true } },
       items: {
         include: {
           medicine: {
@@ -383,26 +286,16 @@ export const getOrdersBySeller = async (sellerId: string, params: GetOrdersParam
               id: true,
               name: true,
               price: true,
-              seller: {
-                select: {
-                  id: true,
-                  shopName: true,
-                },
-              },
-            },
-          },
-        },
-      },
+              seller: { select: { id: true, shopName: true } }
+            }
+          }
+        }
+      }
     },
   });
 
   return {
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     data: orders,
   };
 };
@@ -410,17 +303,11 @@ export const getOrdersBySeller = async (sellerId: string, params: GetOrdersParam
 /**
  * Get order details by ID
  */
-export const getOrderDetails = async (orderId: string) => {
+const getOrderDetails = async (orderId: string) => {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
-      customer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
+      customer: { select: { id: true, name: true, email: true } },
       items: {
         include: {
           medicine: {
@@ -429,66 +316,41 @@ export const getOrderDetails = async (orderId: string) => {
               name: true,
               price: true,
               imageUrl: true,
-              seller: {
-                select: {
-                  id: true,
-                  shopName: true,
-                  user: {
-                    select: {
-                      name: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+              seller: { select: { id: true, shopName: true } }
+            }
+          }
+        }
+      }
     },
   });
 
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Order not found");
   }
 
   return order;
 };
 
 /**
- * ADMIN: Update order status
+ * Update order status (Admin/Seller)
  */
-export const updateOrderStatus = async (payload: UpdateOrderStatusPayload) => {
+const updateOrderStatus = async (payload: UpdateOrderStatusPayload) => {
   const { orderId, status, userRole, userId } = payload;
 
-  // Validate order exists
   const order = await prisma.order.findUnique({
     where: { id: orderId },
   });
 
   if (!order) {
-    throw new Error("Order not found");
+    throw new AppError(httpStatus.NOT_FOUND, "Order not found");
   }
 
-  // Validate status transition (basic validation)
-  const validStatuses = Object.values(OrderStatus);
-  if (!validStatuses.includes(status)) {
-    throw new Error("Invalid order status");
-  }
-
-  // For admin, allow all status changes
-  // For seller, only allow certain status changes and only for their orders
   if (userRole === Role.SELLER) {
-    // Check if the order contains seller's medicines
     const orderWithItems = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: {
-          include: {
-            medicine: true,
-          },
-        },
-      },
+        items: { include: { medicine: true } }
+      }
     });
 
     const hasSellerMedicines = orderWithItems?.items.some(
@@ -496,123 +358,110 @@ export const updateOrderStatus = async (payload: UpdateOrderStatusPayload) => {
     );
 
     if (!hasSellerMedicines) {
-      throw new Error("You can only update orders containing your medicines");
+      throw new AppError(httpStatus.FORBIDDEN, "You can only update orders containing your medicines");
     }
 
-    // Sellers can only change status to CONFIRMED, SHIPPED, or DELIVERED
-    const allowedStatuses: OrderStatus[] = [OrderStatus.CONFIRMED, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
+    const allowedStatuses: OrderStatus[] = [OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED];
     if (!allowedStatuses.includes(status)) {
-      throw new Error("Sellers can only set status to CONFIRMED, SHIPPED, or DELIVERED");
+      throw new AppError(httpStatus.BAD_REQUEST, "Sellers can only set status to PROCESSING, SHIPPED, or DELIVERED");
     }
   }
 
-  // Update order status
   const updatedOrder = await prisma.order.update({
     where: { id: orderId },
     data: { status },
     include: {
-      customer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      items: {
-        include: {
-          medicine: {
-            select: {
-              id: true,
-              name: true,
-              seller: {
-                select: {
-                  shopName: true,
-                },
-              },
-            },
-          },
-        },
-      },
+      customer: { select: { id: true, name: true, email: true } }
     },
   });
 
-  // Send email to customer on status change
   if (updatedOrder.customer?.email) {
-    let subject = "Order Update";
-    let html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) status is now <b>${status}</b>.</p>`;
-    if (status === OrderStatus.SHIPPED) {
-      subject = "Your Order Has Shipped";
-      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>shipped</b> and is on its way!</p>`;
-    } else if (status === OrderStatus.DELIVERED) {
-      subject = "Order Delivered";
-      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>delivered</b>. Thank you for shopping with us!</p>`;
-    } else if (status === OrderStatus.CONFIRMED) {
-      subject = "Order Confirmed";
-      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>confirmed</b> and is being prepared.</p>`;
-    } else if (status === OrderStatus.CANCELLED) {
-      subject = "Order Cancelled";
-      html = `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) has been <b>cancelled</b>. If you have questions, please contact support.</p>`;
-    }
     await sendMail({
       to: updatedOrder.customer.email,
-      subject,
-      html,
+      subject: `Order Update - ${status}`,
+      html: `<p>Dear ${updatedOrder.customer.name || "Customer"},</p><p>Your order (ID: ${updatedOrder.id}) status is now <b>${status}</b>.</p>`
     });
   }
   return updatedOrder;
 };
 
 /**
+ * Customer: Cancel order
+ */
+const cancelOrder = async (orderId: string, customerId: string) => {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order) {
+    throw new AppError(httpStatus.NOT_FOUND, "Order not found");
+  }
+
+  if (order.customerId !== customerId) {
+    throw new AppError(httpStatus.FORBIDDEN, "Unauthorized: You can only cancel your own orders");
+  }
+
+  if (order.status !== OrderStatus.PLACED) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Order cannot be cancelled as it is already in ${order.status} status`
+    );
+  }
+
+  const cancelledOrder = await prisma.$transaction(async (tx) => {
+    // 1. Update status
+    const updated = await tx.order.update({
+      where: { id: orderId },
+      data: { status: OrderStatus.CANCELLED },
+    });
+
+    // 2. Restore stock
+    for (const item of order.items) {
+      await tx.medicine.update({
+        where: { id: item.medicineId },
+        data: { stock: { increment: item.quantity } },
+      });
+    }
+
+    return updated;
+  });
+
+  return cancelledOrder;
+};
+
+/**
  * Get customer's orders
  */
-export const getCustomerOrders = async (customerId: string, params: GetOrdersParams) => {
+const getCustomerOrders = async (customerId: string, params: GetOrdersParams) => {
   const page = params.page && params.page > 0 ? params.page : 1;
   const limit = params.limit && params.limit > 0 ? params.limit : 10;
 
   const skip = (page - 1) * limit;
-
-  const whereCondition: any = {
-    customerId,
-  };
+  const whereCondition: any = { customerId };
 
   if (params.status) {
     whereCondition.status = params.status;
   }
 
-  const total = await prisma.order.count({
-    where: whereCondition,
-  });
+  const total = await prisma.order.count({ where: whereCondition });
 
   const orders = await prisma.order.findMany({
     where: whereCondition,
     skip,
     take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
     include: {
       items: {
         include: {
-          medicine: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
-              imageUrl: true,
-            },
-          },
-        },
-      },
+          medicine: { select: { id: true, name: true, price: true, imageUrl: true } }
+        }
+      }
     },
   });
 
   return {
-    meta: {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    },
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     data: orders,
   };
 };
@@ -625,5 +474,5 @@ export const orderService = {
   getOrderDetails,
   updateOrderStatus,
   getCustomerOrders,
+  cancelOrder,
 };
-

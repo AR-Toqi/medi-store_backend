@@ -13,6 +13,7 @@ const getAllUsers = async () => {
       createdAt: true,
       sellerProfile: {
         select: {
+          id: true,
           shopName: true,
           isVerified: true
         }
@@ -69,9 +70,52 @@ const getAllSellers = async () => {
   return sellers;
 };
 
+
+const deleteSeller = async (id: string) => {
+  const cleanId = id.trim();
+
+  // Try to find by Profile ID or User ID (both are unique)
+  const seller = await prisma.sellerProfile.findFirst({
+    where: {
+      OR: [
+        { id: cleanId },
+        { userId: cleanId }
+      ]
+    },
+    include: { user: true }
+  });
+
+  if (!seller) {
+    throw new AppError(httpStatus.NOT_FOUND, "Seller profile not found");
+  }
+
+  // Ensure user is banned before allowing deletion
+  if (!seller.user.isBanned) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      "Active sellers cannot be deleted. Please ban the user account first."
+    );
+  }
+
+  try {
+    await prisma.sellerProfile.delete({
+      where: { id: seller.id },
+    });
+  } catch (error: any) {
+    if (error.code === "P2003") {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        "This seller cannot be deleted because they have associated medicines or order history. Please keep the user banned instead."
+      );
+    }
+    throw error;
+  }
+};
+
 export const adminService = {
   getAllUsers,
   updateUserStatus,
   getAllSellers,
-  deleteUser
+  deleteUser,
+  deleteSeller,
 };

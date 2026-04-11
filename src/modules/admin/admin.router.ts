@@ -14,6 +14,7 @@ router.get("/users", adminController.getAllUsers);
 router.patch("/users/:id", adminController.updateUserStatus);
 router.delete("/users/:id", adminController.deleteUser);
 router.get("/sellers", adminController.getAllSellers);
+router.delete("/sellers/:id", adminController.deleteSeller);
 
 // Order Management
 router.get("/orders", adminController.getAllOrders);

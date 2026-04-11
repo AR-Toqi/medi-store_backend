@@ -1,3 +1,4 @@
+
 export interface CreateSellerProfileInput {
   userId: string;
   shopName: string;
