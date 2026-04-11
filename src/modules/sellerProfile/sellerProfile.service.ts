@@ -26,26 +26,36 @@ export const createSellerProfile = async (payload: CreateSellerProfileInput) => 
         throw new Error("Seller profile already exists for this user");
     }
 
-    // Create seller profile
-    const sellerProfile = await prisma.sellerProfile.create({
-        data: {
-            userId: payload.userId,
-            shopName: payload.shopName,
-            ...(payload.shopDescription && { shopDescription: payload.shopDescription }),
-            ...(payload.licenseNumber && { licenseNumber: payload.licenseNumber }),
-        },
-        include: {
-            user: {
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
+    // Create seller profile and update user role in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+        const sellerProfile = await tx.sellerProfile.create({
+            data: {
+                userId: payload.userId,
+                shopName: payload.shopName,
+                ...(payload.shopDescription && { shopDescription: payload.shopDescription }),
+                ...(payload.licenseNumber && { licenseNumber: payload.licenseNumber }),
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
                 },
             },
-        },
+        });
+
+        // Update user role to SELLER
+        await tx.user.update({
+            where: { id: payload.userId },
+            data: { role: "SELLER" },
+        });
+
+        return sellerProfile;
     });
 
-    return sellerProfile;
+    return result;
 };
 
 export const getSellerProfile = async (userId: string) => {

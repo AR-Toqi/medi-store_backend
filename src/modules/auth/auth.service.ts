@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
+import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
 import { generateAccessToken, generateRefreshToken } from "../../utils/token.utils";
+import AppError from "../../app/errors/AppError";
 
 const signUp = async (payload: any) => {
   const { email, password, name, role } = payload;
@@ -10,7 +12,7 @@ const signUp = async (payload: any) => {
   });
 
   if (userExists) {
-    throw new Error("User already exists");
+    throw new AppError(httpStatus.BAD_REQUEST, "User already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -35,17 +37,17 @@ const signIn = async (payload: any) => {
   });
 
   if (!user) {
-    throw new Error("Invalid credentials");
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
   }
 
   if (user.isBanned) {
-    throw new Error("User is banned");
+    throw new AppError(httpStatus.FORBIDDEN, "User is banned");
   }
 
   const isPasswordMatch = await bcrypt.compare(password, user.password);
 
   if (!isPasswordMatch) {
-    throw new Error("Invalid credentials");
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
   }
 
   const jwtPayload = {

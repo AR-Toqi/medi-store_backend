@@ -2,23 +2,29 @@ import { Router } from "express";
 import { requireAuth } from "../../middlewares/auth.middleware";
 import { USER_ROLE } from "../../types/role";
 import { roleGuard } from './../../middlewares/roleGuard.middleware';
-
-// Import admin controllers
-import { sellerProfileController } from './../sellerProfile/sellerProfile.controller';
-import { categoryController } from './../categories/categories.controller';
-import { orderController } from './../order/order.controller';
+import { adminController } from "./admin.controller";
 
 const router = Router();
 
-// Apply admin authentication to all routes
+// Apply admin authentication and role guard to all routes
 router.use(requireAuth, roleGuard(USER_ROLE.ADMIN));
 
-// Admin dashboard routes
-router.get("/orders", orderController.getAllOrders);
-router.get("/categories", categoryController.getAllCategories);
-router.post("/categories", categoryController.createCategory);
-router.put("/categories/:id", categoryController.updateCategory);
-router.delete("/categories/:id", categoryController.deleteCategory);
-router.get("/sellers", sellerProfileController.getAllSellers);
+// User Management
+router.get("/users", adminController.getAllUsers);
+router.patch("/users/:id", adminController.updateUserStatus);
+router.delete("/users/:id", adminController.deleteUser);
+router.get("/sellers", adminController.getAllSellers);
+
+// Order Management
+router.get("/orders", adminController.getAllOrders);
+
+// Medicine Management
+router.get("/medicines", adminController.getAllMedicines);
+
+// Category Management
+router.get("/categories", adminController.getAllCategories);
+router.post("/categories", adminController.createCategory);
+router.put("/categories/:id", adminController.updateCategory);
+router.delete("/categories/:id", adminController.deleteCategory);
 
 export const adminRoutes = router;

@@ -11,11 +11,8 @@ router.post("/", requireAuth, orderController.createOrder);
 router.get("/my-orders", requireAuth, orderController.getMyOrders);
 router.post("/checkout", requireAuth, orderController.checkout);
 
-//* Seller routes
-router.get("/dashboard/orders", requireAuth, roleGuard(USER_ROLE.SELLER), orderController.getOrdersBySeller);
-
-//* Shared routes (customer, seller, admin can access based on permissions)
+//* Shared routes (customer and admin reach this)
 router.get("/:id", requireAuth, orderController.getOrderDetails);
-router.put("/:id/status", requireAuth, roleGuard(USER_ROLE.ADMIN, USER_ROLE.SELLER), orderController.updateOrderStatus);
+router.put("/:id/status", requireAuth, roleGuard(USER_ROLE.ADMIN), orderController.updateOrderStatus);
 
 export const orderRoutes = router;

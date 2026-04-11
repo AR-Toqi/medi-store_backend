@@ -1,76 +1,62 @@
 import { Request, Response } from "express";
+import httpStatus from "http-status";
 import { authService } from "./auth.service";
+import catchAsync from "../../app/errors/catchAsync";
+import sendResponse from "../../app/utils/sendResponse";
 
-const signUp = async (req: Request, res: Response) => {
-  try {
-    const result = await authService.signUp(req.body);
+const signUp = catchAsync(async (req: Request, res: Response) => {
+  const result = await authService.signUp(req.body);
 
-    return res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Registration failed",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "User registered successfully",
+    data: result,
+  });
+});
 
-const signIn = async (req: Request, res: Response) => {
-  try {
-    const result = await authService.signIn(req.body);
+const signIn = catchAsync(async (req: Request, res: Response) => {
+  const result = await authService.signIn(req.body);
 
-    const { accessToken, refreshToken, user } = result;
+  const { accessToken, refreshToken, user } = result;
 
-    // Set tokens in httpOnly cookies
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 1 * 60 * 60 * 1000, // 1 hour
-    });
+  // Set tokens in httpOnly cookies
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 1 * 60 * 60 * 1000, // 1 hour
+  });
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
 
-    return res.status(200).json({
-      success: true,
-      message: "Successfully logged in",
-      data: {
-        user,
-        accessToken,
-      },
-    });
-  } catch (error: any) {
-    return res.status(401).json({
-      success: false,
-      message: error.message || "Login failed",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Successfully logged in",
+    data: {
+      user,
+      accessToken,
+    },
+  });
+});
 
-const signOut = async (req: Request, res: Response) => {
-  try {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+const signOut = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie("accessToken");
+  res.clearCookie("refreshToken");
 
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Logout failed",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Logged out successfully",
+    data: null,
+  });
+});
 
 export const authController = {
   signUp,

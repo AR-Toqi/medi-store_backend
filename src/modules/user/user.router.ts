@@ -12,10 +12,4 @@ router.get("/", requireAuth, userController.getCurrentUser);
 //* update user
 router.put("/me", requireAuth, userController.updateUser);
 
-//* get all users
-router.get("/admin/users", requireAuth, roleGuard(USER_ROLE.ADMIN), userController.getAllUsers);
-
-//* delete user
-router.delete("/admin/:id", requireAuth, roleGuard(USER_ROLE.ADMIN), userController.deleteUser);
-
 export const userRoutes = router;

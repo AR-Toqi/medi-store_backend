@@ -1,117 +1,82 @@
 import { Request, Response } from "express";
+import httpStatus from "http-status";
 import { AuthRequest } from "../../middlewares/auth.middleware";
-import { USER_ROLE } from "../../types/role";
 import { categoryService } from './categories.service';
+import catchAsync from "../../app/errors/catchAsync";
+import sendResponse from "../../app/utils/sendResponse";
 
 /**
- * Create Category (Admin only)
+ * Create Category (Admin only via roleGuard)
  */
-const createCategory = async (req: AuthRequest, res: Response) => {
-  try {
-    if (req.user?.role !== USER_ROLE.ADMIN) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  const result = await categoryService.createCategory(req.body);
 
-    const result = await categoryService.createCategory(req.body);
-
-    return res.status(201).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(409).json({
-      success: false,
-      message: error.message || "Failed to create category",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Category created successfully",
+    data: result,
+  });
+});
 
 /**
  * Get All Categories (Public)
  */
-const getAllCategories = async (_req: Request, res: Response) => {
-  try {
-    const result = await categoryService.getAllCategories();
+const getAllCategories = catchAsync(async (_req: Request, res: Response) => {
+  const result = await categoryService.getAllCategories();
 
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch categories",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Categories fetched successfully",
+    data: result,
+  });
+});
 
 /**
  * Get Single Category by ID (Public)
  */
-const getSingleCategory = async (req: Request, res: Response) => {
-  try {
-    const result = await categoryService.getSingleCategory(req.params.id as string);
+const getSingleCategory = catchAsync(async (req: Request, res: Response) => {
+  const result = await categoryService.getSingleCategory(req.params.id as string);
 
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(404).json({
-      success: false,
-      message: error.message || "Category not found",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Category details fetched successfully",
+    data: result,
+  });
+});
 
 /**
- * Update Category (Admin only)
+ * Update Category (Admin only via roleGuard)
  */
-const updateCategory = async (req: AuthRequest, res: Response) => {
-  try {
-    if (req.user?.role !== USER_ROLE.ADMIN) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  const result = await categoryService.updateCategory(
+    req.params.id as string,
+    req.body
+  );
 
-    const result = await categoryService.updateCategory(
-      req.params.id as string,
-      req.body
-    );
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to update category",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Category updated successfully",
+    data: result,
+  });
+});
 
 /**
- * Delete Category (Admin only)
+ * Delete Category (Admin only via roleGuard)
  */
-const deleteCategory = async (req: AuthRequest, res: Response) => {
-  try {
-    if (req.user?.role !== USER_ROLE.ADMIN) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+const deleteCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  await categoryService.deleteCategory(req.params.id as string);
 
-    await categoryService.deleteCategory(req.params.id as string);
-
-    return res.status(200).json({
-      success: true,
-      message: "Category deleted successfully",
-    });
-  } catch (error: any) {
-    return res.status(400).json({
-      success: false,
-      message: error.message || "Failed to delete category",
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Category deleted successfully",
+    data: null,
+  });
+});
 
 export const categoryController = {
   createCategory,
