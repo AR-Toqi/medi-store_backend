@@ -22,7 +22,7 @@ const signUp = async (payload: any) => {
       email,
       password,
       name,
-      role: role || "CUSTOMER",
+      role
     }
   });
 
@@ -41,6 +41,14 @@ const signIn = async (payload: any) => {
 
   if (!session) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
+  }
+
+  if (!session.user.emailVerified) {
+    throw new AppError(httpStatus.FORBIDDEN, "Email not verified");
+  }
+
+  if (session.user.isBanned) {
+    throw new AppError(httpStatus.FORBIDDEN, "User is banned");
   }
 
   const user = session.user;
@@ -101,14 +109,14 @@ const verifyEmail = async (payload: { email: string, otp?: string, code?: string
     });
 
     return await prisma.user.findUnique({
-        where: { id: result.user.id },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          emailVerified: true,
-        }
+      where: { id: result.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        emailVerified: true,
+      }
     })
   }
 
