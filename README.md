@@ -13,7 +13,7 @@ This backend allows users to:
 
 ## 🚀 Live Project
 **Backend URL:**  
-https://medistore-backend.vercel.app/
+https://medi-store-backend-u9ux.onrender.com/
 
 **GitHub Repository:**  
 https://github.com/AR-Toqi/medi-store_backend
@@ -27,7 +27,7 @@ https://github.com/AR-Toqi/medi-store_backend
 - **Database:** PostgreSQL
 - **ORM:** Prisma
 - **Authentication:** Better Auth
-- **Deployment:** Vercel
+- **Deployment:** Render
 
 ---
 
@@ -48,8 +48,12 @@ Authentication in MediStore is handled using **Better Auth**.
 
 ### 🔍 Health & Auth
 
-`GET  /`                      → Health check
-`GET  /api/auth/me`           → Get current logged-in user
+`POST /api/auth/register`      → Register a new user
+`POST /api/auth/login`         → Login (Set cookies)
+`POST /api/auth/logout`        → Logout (Clear cookies)
+`POST /api/auth/verify-email`  → Verify email with OTP
+`GET  /api/me`                 → Get current logged-in user
+`PUT  /api/me`                 → Update user profile
 
 ### 📂 Categories (Public + Admin)
 
@@ -89,27 +93,31 @@ Authentication in MediStore is handled using **Better Auth**.
 `POST   /api/reviews`                       → Create review (Customer)
 `DELETE /api/reviews/:reviewId`             → Delete review (Admin)
 
-### 🏠 Address (Customer/Seller + Admin)
+### 🏠 Address (Customer)
 
-`GET    /api/address/admin/all`     → Get all addresses (Admin)
-`GET    /api/address/my-addresses`  → Get my addresses
-`GET    /api/address/:id`           → Get single address
-`POST   /api/address`               → Create address
-`PUT    /api/address/:id`           → Update address
-`DELETE /api/address/:id`           → Delete address
+`GET    /api/addresses`             → Get my addresses
+`GET    /api/addresses/:id`         → Get single address
+`POST   /api/addresses`             → Create address
+`PUT    /api/addresses/:id`         → Update address
+`DELETE /api/addresses/:id`         → Delete address
+`PUT    /api/addresses/:id/default` → Set default address
 
-### 🧑‍⚕️ Seller Profile (Seller + Admin)
+### 🧑‍⚕️ Seller Profile & Dashboard (Seller)
 
-`GET    /api/seller/all`        → Get all sellers (Admin)
-`GET    /api/seller/profile`   → Get my seller profile
-`POST   /api/seller/profile`   → Create seller profile
-`PUT    /api/seller/profile`   → Update seller profile
+`POST   /api/sellers`           → Become a seller (Create profile)
+`GET    /api/seller/profile`    → Get my seller profile
+`PATCH  /api/seller/profile`    → Update seller profile
+`GET    /api/seller/stats`      → Get dashboard stats
+`GET    /api/seller/orders`     → Manage my shop orders
+`GET    /api/seller/medicines`  → Manage my medicines
 
-### 🛡 Admin Users
+### 🛡 Admin Management
 
-`GET    /api/admin/users`           → Get all users
-`PATCH  /api/admin/users/:id`       → Update user status
-`DELETE /api/admin/users/:userId`   → Delete user
+`GET    /api/admin/users`           → View all users
+`PATCH  /api/admin/users/:id`       → Ban/Unban/Role Update
+`GET    /api/admin/orders`          → View all system orders
+`GET    /api/admin/categories`      → Manage categories
+`POST   /api/admin/categories`      → Create category
 
 ---
 
@@ -126,7 +134,7 @@ Authentication in MediStore is handled using **Better Auth**.
 ## 📌 Project Status
 ✅ Backend Complete  
 🚀 Production Ready  
-🌐 Deployed on Vercel
+🌐 Deployed on Render
 
 ---
 
