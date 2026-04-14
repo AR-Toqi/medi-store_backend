@@ -6,13 +6,15 @@ import { sendEmail } from "../app/utils/email";
 import { USER_ROLE } from "../types/role";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL,
+  secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: [process.env.APP_URL!],
+  trustedOrigins: [process.env.APP_URL!, process.env.BETTER_AUTH_URL!],
   user: {
     additionalFields: {
       role: {

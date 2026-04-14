@@ -9,8 +9,10 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: process.env.APP_URL,
+    origin: [process.env.APP_URL, process.env.BETTER_AUTH_URL] as string[],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(cookieParser());
