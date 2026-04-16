@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../../middlewares/auth.middleware";
 import httpStatus from "http-status";
 import catchAsync from "../../app/errors/catchAsync";
 import sendResponse from "../../app/utils/sendResponse";
 import { adminService } from "./admin.service";
+import { deleteFromCloudinary } from "../../utils/cloudinary";
 import { orderService } from "../order/order.service";
 import { medicineService } from "../medicine/medicine.service";
 import { categoryService } from "../categories/categories.service";
@@ -104,14 +106,25 @@ const deleteSeller = catchAsync(async (req: Request, res: Response) => {
 });
 
 // Category Management (Delegated)
-const createCategory = catchAsync(async (req: Request, res: Response) => {
-  const result = await categoryService.createCategory(req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Category created successfully",
-    data: result,
-  });
+const createCategory = catchAsync(async (req: AuthRequest, res: Response) => {
+  const categoryData = { ...req.body };
+  if (req.file) {
+    categoryData.image = req.file.path;
+  }
+  try {
+    const result = await categoryService.createCategory(categoryData);
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Category created successfully",
+      data: result,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 const getAllCategories = catchAsync(async (req: Request, res: Response) => {
@@ -124,15 +137,26 @@ const getAllCategories = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateCategory = catchAsync(async (req: Request, res: Response) => {
+const updateCategory = catchAsync(async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const result = await categoryService.updateCategory(id, req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Category updated successfully",
-    data: result,
-  });
+  const categoryData = { ...req.body };
+  if (req.file) {
+    categoryData.image = req.file.path;
+  }
+  try {
+    const result = await categoryService.updateCategory(id, categoryData);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Category updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 const deleteCategory = catchAsync(async (req: Request, res: Response) => {

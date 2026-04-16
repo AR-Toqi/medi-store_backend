@@ -21,9 +21,26 @@ MediStore is a full-stack e-commerce web application for purchasing over-the-cou
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-🛠️ **See [README.md](./README.md#-tech-stack) for complete technology specifications.**
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| Next.js | App Router, SSR/SSG |
+| TypeScript | Type safety |
+| Tailwind CSS | Styling (or any CSS framework) |
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| Node.js + Express | REST API |
+| Postgres + Prisma | Database |
+
+### Deployment
+| Service | Purpose |
+|---------|---------|
+| Vercel/Render | Frontend & Backend deployment |
+
 
 ---
 

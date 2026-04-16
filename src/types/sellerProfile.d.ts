@@ -4,12 +4,14 @@ export interface CreateSellerProfileInput {
   shopName: string;
   shopDescription?: string;
   licenseNumber?: string;
+  shopLogo?: string;
 }
 
 export interface CreateSellerProfilePayload {
   shopName: string;
   shopDescription?: string;
   licenseNumber?: string;
+  shopLogo?: string;
 }
 
 export interface UpdateSellerProfilePayload {

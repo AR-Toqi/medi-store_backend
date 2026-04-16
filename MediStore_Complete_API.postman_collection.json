@@ -16,7 +16,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"password\": \"Password123!\",\n    \"role\": \"CUSTOMER\"\n}",
+              "raw": "{\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"password\": \"Password123!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -182,13 +182,19 @@
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Jane Updated\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Jane Updated",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{baseURL}}/me",
@@ -351,13 +357,29 @@
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"shopName\": \"Healthy Pharmacy\",\n    \"shopDescription\": \"Best medicines at the best price.\",\n    \"licenseNumber\": \"LIC-123456\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "shopName",
+                  "value": "Healthy Pharmacy",
+                  "type": "text"
+                },
+                {
+                  "key": "shopDescription",
+                  "value": "Best medicines at the best price.",
+                  "type": "text"
+                },
+                {
+                  "key": "licenseNumber",
+                  "value": "LIC-123456",
+                  "type": "text"
+                },
+                {
+                  "key": "logo",
+                  "type": "file",
+                  "src": []
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{baseURL}}/sellers",
@@ -696,13 +718,49 @@
               }
             ],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"New Medicine\",\n    \"categoryId\": \"cat_id\",\n    \"price\": 15.5,\n    \"stock\": 100,\n    \"manufacturer\": \"Pharma Corp\",\n    \"description\": \"Effective medicine for...\",\n    \"dosage\": \"500mg\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "New Medicine",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "cat_id",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "15.5",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "manufacturer",
+                  "value": "Pharma Corp",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Effective medicine for...",
+                  "type": "text"
+                },
+                {
+                  "key": "dosage",
+                  "value": "500mg",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{baseURL}}/seller/medicines",
@@ -917,13 +975,24 @@
                   }
                 ],
                 "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"name\": \"Antibiotics\",\n    \"description\": \"Medicines that destroy or inhibit the growth of microorganisms.\",\n    \"image\": \"https://example.com/antibiotics.png\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Antibiotics",
+                      "type": "text"
+                    },
+                    {
+                      "key": "description",
+                      "value": "Medicines that destroy or inhibit the growth of microorganisms.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
                     }
-                  }
+                  ]
                 },
                 "url": {
                   "raw": "{{baseURL}}/admin/categories",
@@ -945,13 +1014,19 @@
                   }
                 ],
                 "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"name\": \"Antibiotics Updated\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Antibiotics Updated",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": []
                     }
-                  }
+                  ]
                 },
                 "url": {
                   "raw": "{{baseURL}}/admin/categories/:id",

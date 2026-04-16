@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt";
 import { USER_ROLE } from "../types/role";
 import { prisma } from "./prisma";
+import { auth } from "./auth";
 
 /**
  * seedAdmin - Idempotent script to ensure a primary administrator exists in the database.
@@ -47,21 +47,27 @@ const seedAdmin = async () => {
       return;
     }
 
-    // 3. Hash the password securely
-    const hashedPassword = await bcrypt.hash(adminPass, 10);
-
-    // 4. Create new admin directly via Prisma
-    await prisma.user.create({
-      data: {
+    // 3. Create new admin via Better Auth API
+    // This ensures that the Account record (required for login) is also created
+    const result = await auth.api.signUpEmail({
+      body: {
         name: adminName,
         email: adminEmail,
-        password: hashedPassword,
-        role: USER_ROLE.ADMIN,
-        emailVerified: true,
+        password: adminPass,
       },
     });
 
-    console.log("✅ Admin user created successfully.");
+    if (result && result.user) {
+      // 4. Update the user to set ADMIN role and mark as verified
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: {
+          role: USER_ROLE.ADMIN,
+          emailVerified: true,
+        },
+      });
+      console.log("✅ Admin user created and elevated to ADMIN role successfully.");
+    }
 
   } catch (error) {
     console.error("❌ Failed to seed admin:", error);

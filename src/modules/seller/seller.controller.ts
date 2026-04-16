@@ -7,6 +7,7 @@ import { medicineService } from "../medicine/medicine.service";
 import { orderService } from "../order/order.service";
 import { sellerService } from "./seller.service";
 import { sellerProfileService } from "../sellerProfile/sellerProfile.service";
+import { deleteFromCloudinary } from "../../utils/cloudinary";
 
 /**
  * Helper to get seller profile for the authenticated user via sellerService
@@ -37,14 +38,26 @@ const createMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id as string;
   const sellerProfile = await getMySellerProfile(userId);
   
-  const medicine = await medicineService.createMedicineForSeller(sellerProfile.id, req.body);
+  const medicineData = { ...req.body };
+  if (req.file) {
+    medicineData.imageUrl = req.file.path;
+  }
   
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Medicine created successfully",
-    data: medicine,
-  });
+  try {
+    const medicine = await medicineService.createMedicineForSeller(sellerProfile.id, medicineData);
+    
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Medicine created successfully",
+      data: medicine,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 const getMyMedicines = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -89,18 +102,30 @@ const updateMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
   const sellerProfile = await getMySellerProfile(userId);
   const { id } = req.params;
 
-  const updatedMedicine = await medicineService.updateMedicineBySeller(
-    sellerProfile.id,
-    id as string,
-    req.body
-  );
+  const medicineData = { ...req.body };
+  if (req.file) {
+    medicineData.imageUrl = req.file.path;
+  }
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Medicine updated successfully",
-    data: updatedMedicine,
-  });
+  try {
+    const updatedMedicine = await medicineService.updateMedicineBySeller(
+      sellerProfile.id,
+      id as string,
+      medicineData
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Medicine updated successfully",
+      data: updatedMedicine,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 const deleteMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -181,14 +206,25 @@ const getProfile = catchAsync(async (req: AuthRequest, res: Response) => {
 
 const updateProfile = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id as string;
-  const updatedProfile = await sellerProfileService.updateSellerProfile(userId, req.body);
+  const profileData = { ...req.body };
+  if (req.file) {
+    profileData.shopLogo = req.file.path;
+  }
+  try {
+    const updatedProfile = await sellerProfileService.updateSellerProfile(userId, profileData);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Profile updated successfully",
-    data: updatedProfile,
-  });
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 const deleteProfile = catchAsync(async (req: AuthRequest, res: Response) => {

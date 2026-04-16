@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { generateAccessToken, generateRefreshToken } from "../../utils/token.utils";
 import AppError from "../../app/errors/AppError";
 import { auth } from "../../lib/auth";
+import { USER_ROLE } from "../../types/role";
 
 const signUp = async (payload: any) => {
   const { email, password, name, role } = payload;
@@ -22,7 +23,7 @@ const signUp = async (payload: any) => {
       email,
       password,
       name,
-      role
+      role: role || USER_ROLE.CUSTOMER
     }
   });
 

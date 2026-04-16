@@ -3,6 +3,7 @@ import { requireAuth } from "../../middlewares/auth.middleware";
 import { USER_ROLE } from "../../types/role";
 import { roleGuard } from './../../middlewares/roleGuard.middleware';
 import { adminController } from "./admin.controller";
+import { upload } from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -24,8 +25,8 @@ router.get("/medicines", adminController.getAllMedicines);
 
 // Category Management
 router.get("/categories", adminController.getAllCategories);
-router.post("/categories", adminController.createCategory);
-router.put("/categories/:id", adminController.updateCategory);
+router.post("/categories", upload.single('image'), adminController.createCategory);
+router.put("/categories/:id", upload.single('image'), adminController.updateCategory);
 router.delete("/categories/:id", adminController.deleteCategory);
 
 export const adminRoutes = router;

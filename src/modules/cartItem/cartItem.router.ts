@@ -3,7 +3,7 @@ import { requireAuth } from "../../middlewares/auth.middleware";
 import { cartItemController } from "./cartItem.controller";
 import { roleGuard } from "../../middlewares/roleGuard.middleware";
 import { USER_ROLE } from "../../types/role";
-// import { verifyEmailGuard } from "../../middlewares/verifyEmail.middleware";
+
 
 const router = Router();
 

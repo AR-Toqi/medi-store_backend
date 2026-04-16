@@ -27,6 +27,8 @@ https://github.com/AR-Toqi/medi-store_backend
 - **Database:** PostgreSQL
 - **ORM:** Prisma
 - **Authentication:** Better Auth
+- **Media Management:** Cloudinary
+- **File Uploads:** Multer
 - **Deployment:** Render
 
 ---
@@ -41,8 +43,30 @@ Authentication in MediStore is handled using **Better Auth**.
 	- **CUSTOMER** – Manage cart, orders, reviews, and addresses
 - Protected routes require a valid authenticated session
 - Role permissions are enforced at the API level
+- Session-based security via cookies
 
 ---
+
+## 🖼 Media & Asset Management
+MediStore uses **Cloudinary** for professional media management (optimization, transformations, and CDNs).
+
+### 📤 How to Upload Files
+For routes that support images, you must send your request as `multipart/form-data` (instead of JSON).
+
+| Asset Type | Field Name | Cloudinary Folder |
+| :--- | :--- | :--- |
+| Medicine Photos | `image` | `medistore/medicines` |
+| Shop Logos | `logo` | `medistore/shops` |
+| Profile Photos | `image` | `medistore/users` |
+| Category Icons | `image` | `medistore/categories` |
+
+### ⚙️ Required Envs
+Ensure you have these in your `.env`:
+```env
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+```
 
 ## 📌 API Endpoints
 

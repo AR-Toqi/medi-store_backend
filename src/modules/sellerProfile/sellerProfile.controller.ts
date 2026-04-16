@@ -4,6 +4,7 @@ import { AuthRequest } from "../../middlewares/auth.middleware";
 import { sellerProfileService } from "./sellerProfile.service";
 import catchAsync from "../../app/errors/catchAsync";
 import sendResponse from "../../app/utils/sendResponse";
+import { deleteFromCloudinary } from "../../utils/cloudinary";
 
 /**
  * USER → Create seller profile (become a seller)
@@ -17,14 +18,25 @@ const createSellerProfile = catchAsync(async (req: AuthRequest, res: Response) =
     userId,
   };
 
-  const sellerProfile = await sellerProfileService.createSellerProfile(sellerProfileData);
+  if (req.file) {
+    sellerProfileData.shopLogo = req.file.path;
+  }
 
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Seller profile created successfully",
-    data: sellerProfile,
-  });
+  try {
+    const sellerProfile = await sellerProfileService.createSellerProfile(sellerProfileData);
+
+    sendResponse(res, {
+      statusCode: httpStatus.CREATED,
+      success: true,
+      message: "Seller profile created successfully",
+      data: sellerProfile,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 /**
@@ -47,17 +59,27 @@ const getSellerProfile = catchAsync(async (req: AuthRequest, res: Response) => {
  * SELLER → Update own seller profile
  */
 const updateSellerProfile = catchAsync(async (req: AuthRequest, res: Response) => {
-  const payload = req.body;
+  const payload = { ...req.body };
+  if (req.file) {
+    payload.shopLogo = req.file.path;
+  }
   const userId = req.user?.id;
 
-  const updatedProfile = await sellerProfileService.updateSellerProfile(userId as string, payload);
+  try {
+    const updatedProfile = await sellerProfileService.updateSellerProfile(userId as string, payload);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Seller profile updated successfully",
-    data: updatedProfile,
-  });
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Seller profile updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    if (req.file) {
+      await deleteFromCloudinary(req.file.filename);
+    }
+    throw error;
+  }
 });
 
 /**

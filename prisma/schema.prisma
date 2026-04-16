@@ -31,7 +31,7 @@ model User {
   id      String   @id @default(uuid())
   name    String
   email   String   @unique
-  password String?   // Added for custom auth
+
   orders  Order[]  @relation("CustomerOrders")
   reviews Review[]
   cartItems CartItem[]
@@ -79,7 +79,7 @@ model Medicine {
   categoryId String
   sellerId   String
 
-  category Category      @relation(fields: [categoryId], references: [id])
+  category Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   seller   SellerProfile @relation(fields: [sellerId], references: [id])
 
   reviews    Review[]

@@ -3,6 +3,9 @@ import { slugify } from "../../utils/slugify";
 import type { CreateMedicineInput, UpdateMedicineInput, GetMedicinesParams, MedicineUpdateData } from '../../types/medicine.d';
 import httpStatus from "http-status";
 import AppError from "../../app/errors/AppError";
+import { deleteFromCloudinary, extractPublicId } from "../../utils/cloudinary";
+ 
+const DEFAULT_MEDICINE_IMAGE = "https://placehold.co/600x400/00bfa5/ffffff?text=Medicine+Image";
 
 /**
  * Public: Get all medicines with advanced filtering
@@ -134,12 +137,13 @@ export const createMedicineForSeller = async (sellerId: string, payload: CreateM
       name: payload.name,
       slug,
       description: payload.description || "",
-      price: payload.price,
-      stock: payload.stock,
+      price: Number(payload.price),
+      stock: Number(payload.stock),
       manufacturer: payload.manufacturer || "Unknown",
       categoryId: payload.categoryId,
       sellerId,
-      isFeatured: payload.isFeatured || false,
+      isFeatured: String(payload.isFeatured) === "true",
+      imageUrl: payload.imageUrl || DEFAULT_MEDICINE_IMAGE,
     },
     include: { category: true },
   });
@@ -209,12 +213,21 @@ export const updateMedicineBySeller = async (sellerId: string, medicineId: strin
     updateData.slug = slug;
   }
   if (payload.description !== undefined) updateData.description = payload.description;
-  if (payload.price !== undefined) updateData.price = payload.price;
-  if (payload.stock !== undefined) updateData.stock = payload.stock;
+  if (payload.price !== undefined) updateData.price = Number(payload.price);
+  if (payload.stock !== undefined) updateData.stock = Number(payload.stock);
   if (payload.manufacturer !== undefined) updateData.manufacturer = payload.manufacturer;
   if (payload.dosage !== undefined) updateData.dosage = payload.dosage;
   if (payload.categoryId !== undefined) updateData.categoryId = payload.categoryId;
-  if (payload.isFeatured !== undefined) updateData.isFeatured = payload.isFeatured;
+  if (payload.isFeatured !== undefined) updateData.isFeatured = String(payload.isFeatured) === "true";
+  
+  if (payload.imageUrl !== undefined) {
+    (updateData as any).imageUrl = payload.imageUrl;
+    // Delete old image if it exists and is different from default
+    if (medicine.imageUrl && !medicine.imageUrl.includes("placehold.co")) {
+      const publicId = extractPublicId(medicine.imageUrl);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
+  }
 
   const updated = await prisma.medicine.update({
     where: { id: medicineId },
@@ -229,6 +242,11 @@ export const deleteMedicineBySeller = async (sellerId: string, medicineId: strin
   const medicine = await prisma.medicine.findUnique({ where: { id: medicineId } });
   if (!medicine) throw new AppError(httpStatus.NOT_FOUND, "Medicine not found");
   if (medicine.sellerId !== sellerId) throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
+
+  if (medicine.imageUrl && !medicine.imageUrl.includes("placehold.co")) {
+    const publicId = extractPublicId(medicine.imageUrl);
+    if (publicId) await deleteFromCloudinary(publicId);
+  }
 
   await prisma.medicine.delete({ where: { id: medicineId } });
   return { message: "Medicine deleted successfully" };

@@ -2,14 +2,19 @@ import { prisma } from "../../lib/prisma";
 import { slugify } from "../../utils/slugify";
 import httpStatus from "http-status";
 import AppError from "../../app/errors/AppError";
+import { deleteFromCloudinary, extractPublicId } from "../../utils/cloudinary";
 
 interface CreateCategoryPayload {
   name: string;
+  image?: string;
+  description?: string;
 }
 
 interface UpdateCategoryPayload {
   name?: string;
   isActive?: boolean;
+  image?: string;
+  description?: string;
 }
 
 /**
@@ -29,7 +34,7 @@ const createCategory = async (payload: CreateCategoryPayload) => {
   }
 
   return await prisma.category.create({
-    data: { name: payload.name, slug },
+    data: { ...payload, slug },
   });
 };
 
@@ -77,6 +82,14 @@ const updateCategory = async (id: string, payload: UpdateCategoryPayload) => {
     updateData.slug = newSlug;
   }
 
+  if (payload.image) {
+    // Delete old image if it exists
+    if (category.image) {
+      const publicId = extractPublicId(category.image);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
+  }
+
   return await prisma.category.update({
     where: { id },
     data: updateData,
@@ -89,15 +102,22 @@ const deleteCategory = async (id: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Category not found");
   }
 
-  const medicineCount = await prisma.medicine.count({
+  const medicines = await prisma.medicine.findMany({
     where: { categoryId: id },
   });
 
-  if (medicineCount > 0) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Cannot delete category because medicines are linked to it. Try deactivating it instead."
-    );
+  // 1. Delete all medicine images from Cloudinary
+  for (const medicine of medicines) {
+    if (medicine.imageUrl && !medicine.imageUrl.includes("placehold.co")) {
+      const publicId = extractPublicId(medicine.imageUrl);
+      if (publicId) await deleteFromCloudinary(publicId);
+    }
+  }
+
+  // 2. Delete category image from Cloudinary
+  if (category.image) {
+    const publicId = extractPublicId(category.image);
+    if (publicId) await deleteFromCloudinary(publicId);
   }
 
   return await prisma.category.delete({ where: { id } });
