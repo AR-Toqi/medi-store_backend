@@ -6,8 +6,8 @@ const router = Router();
 /**
  * Public routes
  */
-router.get("/categories", categoryController.getAllCategories);
-router.get("/categories/:id", categoryController.getSingleCategory);
+router.get("/", categoryController.getAllCategories);
+router.get("/:id", categoryController.getSingleCategory);
 
 // Admin routes moved to /api/admin/categories
 

@@ -49,7 +49,7 @@ model User {
   verificationCode String?
   verificationCodeExpires DateTime?
 
-  @@map("User")
+  @@map("user")
 }
 
 model Category {
