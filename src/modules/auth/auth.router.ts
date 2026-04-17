@@ -15,4 +15,7 @@ router.post("/verify-email", authController.verifyEmail);
 //* Logout
 router.post("/logout", authController.signOut);
 
+//* Refresh Token
+router.post("/refresh-token", authController.refreshToken);
+
 export const authRoutes = router;

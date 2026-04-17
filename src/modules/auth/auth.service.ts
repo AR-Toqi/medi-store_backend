@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import { prisma } from "../../lib/prisma";
-import { generateAccessToken, generateRefreshToken } from "../../utils/token.utils";
+import { generateAccessToken, generateRefreshToken, verifyToken } from "../../utils/token.utils";
 import AppError from "../../app/errors/AppError";
 import { auth } from "../../lib/auth";
 import { USER_ROLE } from "../../types/role";
@@ -132,8 +132,47 @@ const verifyEmail = async (payload: { email: string, otp?: string, code?: string
   return result.user;
 };
 
+const refreshToken = async (token: string) => {
+  // Custom verify
+  try {
+    const decoded = verifyToken(token, process.env.BETTER_AUTH_SECRET as string) as any;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!user) {
+      throw new AppError(httpStatus.UNAUTHORIZED, "User not found");
+    }
+
+    if (user.isBanned) {
+      throw new AppError(httpStatus.FORBIDDEN, "User is banned");
+    }
+
+    const jwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role as string,
+    };
+
+    const accessToken = generateAccessToken(
+      jwtPayload,
+      process.env.BETTER_AUTH_SECRET as string,
+      "1h"
+    );
+
+    return {
+      user,
+      accessToken,
+    };
+  } catch (error) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+  }
+};
+
 export const authService = {
   signUp,
   signIn,
   verifyEmail,
+  refreshToken,
 };
