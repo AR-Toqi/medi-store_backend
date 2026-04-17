@@ -27,7 +27,11 @@ const getCurrentUser = catchAsync(async (req: AuthRequest, res: Response) => {
  */
 const updateUser = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const payload = { ...req.body };
+  
+  // Explicitly filter payload to allow only name and image
+  const payload: any = {};
+  if (req.body.name) payload.name = req.body.name;
+  
   if (req.file) {
     payload.image = req.file.path;
   }
