@@ -27,6 +27,13 @@ const signUp = async (payload: any) => {
     }
   });
 
+  if (role === USER_ROLE.ADMIN) {
+    await prisma.user.update({
+      where: { id: result.user.id },
+      data: { emailVerified: true },
+    });
+  }
+
   return result.user;
 };
 
@@ -44,15 +51,16 @@ const signIn = async (payload: any) => {
     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
   }
 
-  if (!session.user.emailVerified) {
+  const user = session.user;
+  const userRole = (user as any).role;
+
+  if (!user.emailVerified && userRole !== USER_ROLE.ADMIN) {
     throw new AppError(httpStatus.FORBIDDEN, "Email not verified");
   }
 
   if (session.user.isBanned) {
     throw new AppError(httpStatus.FORBIDDEN, "User is banned");
   }
-
-  const user = session.user;
 
   if ((user as any).isBanned) {
     throw new AppError(httpStatus.FORBIDDEN, "User is banned");
@@ -61,7 +69,7 @@ const signIn = async (payload: any) => {
   const jwtPayload = {
     id: user.id,
     email: user.email,
-    role: (user as any).role as string,
+    role: userRole as string,
   };
 
   const accessToken = generateAccessToken(
@@ -80,7 +88,7 @@ const signIn = async (payload: any) => {
     user,
     accessToken,
     refreshToken,
-    requiresVerification: !user.emailVerified
+    requiresVerification: !user.emailVerified && userRole !== USER_ROLE.ADMIN
   };
 };
 

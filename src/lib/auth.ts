@@ -41,20 +41,20 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }: { email: string, otp: string, type: "email-verification" | "forget-password" | "sign-in" | "change-email" }) {
-        if (type === "email-verification") {
-          const user = await prisma.user.findUnique({
-            where: {
-              email,
-            },
-          });
+        const user = await prisma.user.findUnique({
+          where: {
+            email,
+          },
+        });
 
-          // Admin check: Skip sending verification OTP for ADMIN role
-          if (user && user.role === USER_ROLE.ADMIN) {
-            console.log(`User with email ${email} is an admin. Skipping sending verification OTP.`);
-            return;
-          }
+        // Skip sending verification OTP for ADMIN role for auth-related types
+        if (user && user.role === USER_ROLE.ADMIN && (type === "email-verification" || type === "sign-in")) {
+          console.log(`User with email ${email} is an admin. Skipping sending verification OTP (${type}).`);
+          return;
+        }
 
-          if (user && !user.emailVerified) {
+        if (type === "email-verification" && user) {
+          if (!user.emailVerified) {
             await sendEmail({
               to: email,
               subject: "Verify your email",
@@ -65,24 +65,16 @@ export const auth = betterAuth({
               },
             });
           }
-        } else if (type === "forget-password") {
-          const user = await prisma.user.findUnique({
-            where: {
-              email,
+        } else if (type === "forget-password" && user) {
+          await sendEmail({
+            to: email,
+            subject: "Password Reset OTP",
+            templateName: "otp",
+            templateData: {
+              name: user.name,
+              otp,
             },
           });
-
-          if (user) {
-            await sendEmail({
-              to: email,
-              subject: "Password Reset OTP",
-              templateName: "otp",
-              templateData: {
-                name: user.name,
-                otp,
-              },
-            });
-          }
         }
       },
       expiresIn: 2 * 60, // 2 minutes in seconds
