@@ -143,6 +143,21 @@ const deleteMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
   });
 });
 
+const toggleMedicineFeatured = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const sellerProfile = await getMySellerProfile(userId);
+  const { id } = req.params;
+
+  const result = await medicineService.toggleMedicineFeatured(sellerProfile.id, id as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Medicine featured status toggled successfully",
+    data: result,
+  });
+});
+
 // --- Order Management ---
 
 const getMyOrders = catchAsync(async (req: AuthRequest, res: Response) => {
@@ -246,6 +261,7 @@ export const sellerController = {
   getMedicineDetails,
   updateMedicine,
   deleteMedicine,
+  toggleMedicineFeatured,
   getMyOrders,
   updateOrderStatus,
   getProfile,

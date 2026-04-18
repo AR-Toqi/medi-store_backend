@@ -19,6 +19,7 @@ router.post("/medicines", upload.single('image'), sellerController.createMedicin
 router.get("/medicines/:slug", sellerController.getMedicineDetails);
 router.patch("/medicines/:id", upload.single('image'), sellerController.updateMedicine);
 router.delete("/medicines/:id", sellerController.deleteMedicine);
+router.patch("/medicines/:id/featured", sellerController.toggleMedicineFeatured);
 
 // Order Management
 router.get("/orders", sellerController.getMyOrders);

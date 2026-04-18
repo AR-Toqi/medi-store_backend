@@ -28,7 +28,8 @@ export const getAllMedicines = async (params: GetMedicinesParams) => {
     where.AND.push({
       OR: [
         { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } }
+        { description: { contains: search, mode: "insensitive" } },
+        { category: { name: { contains: search, mode: "insensitive" } } }
       ]
     });
   }
@@ -163,7 +164,8 @@ export const getMedicinesBySeller = async (sellerId: string, params: GetMedicine
     ...(search && {
       OR: [
         { name: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } }
+        { description: { contains: search, mode: "insensitive" } },
+        { category: { name: { contains: search, mode: "insensitive" } } }
       ]
     }),
     ...(categoryId && { categoryId })
@@ -252,6 +254,20 @@ export const deleteMedicineBySeller = async (sellerId: string, medicineId: strin
   return { message: "Medicine deleted successfully" };
 };
 
+export const toggleMedicineFeatured = async (sellerId: string, medicineId: string) => {
+  const medicine = await prisma.medicine.findUnique({ where: { id: medicineId } });
+  if (!medicine) throw new AppError(httpStatus.NOT_FOUND, "Medicine not found");
+  if (medicine.sellerId !== sellerId) throw new AppError(httpStatus.FORBIDDEN, "Unauthorized");
+
+  const updated = await prisma.medicine.update({
+    where: { id: medicineId },
+    data: { isFeatured: !medicine.isFeatured },
+    include: { category: true }
+  });
+
+  return { ...updated, price: Number(updated.price) };
+};
+
 export const getMedicineDetailsBySeller = async (sellerId: string, slug: string) => {
   const medicine = await prisma.medicine.findFirst({
     where: { slug, sellerId },
@@ -269,5 +285,6 @@ export const medicineService = {
   getMedicinesBySeller,
   updateMedicineBySeller,
   deleteMedicineBySeller,
+  toggleMedicineFeatured,
   getMedicineDetailsBySeller,
 };
