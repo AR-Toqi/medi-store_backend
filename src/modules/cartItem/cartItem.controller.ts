@@ -34,8 +34,10 @@ const getCartItems = catchAsync(async (req: AuthRequest, res: Response) => {
     statusCode: httpStatus.OK,
     success: true,
     message: "Cart fetched successfully",
-    data: result.items,
-    meta: result.summary as any,
+    data: {
+      items: result.items,
+      summary: result.summary
+    },
   });
 });
 
