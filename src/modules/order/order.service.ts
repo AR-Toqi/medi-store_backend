@@ -73,6 +73,7 @@ const createOrder = async (payload: CreateOrderPayload) => {
         totalAmount,
         shippingAddress: payload.shippingAddress,
         paymentMethod: payload.paymentMethod || "COD",
+        status: OrderStatus.PLACED,
       },
     });
 
@@ -173,6 +174,7 @@ const createOrderFromCart = async (customerId: string, payload: { addressId: str
         totalAmount,
         shippingAddress,
         paymentMethod: payload.paymentMethod || "COD",
+        status: OrderStatus.PLACED,
       },
     });
 
