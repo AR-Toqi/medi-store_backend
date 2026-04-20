@@ -21,11 +21,14 @@ export const requireAuth = async (
   try {
     const authHeader = req.headers.authorization;
     let token = "";
+    let tokenSource = "none";
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1] || "";
+      tokenSource = "header";
     } else if (req.cookies.accessToken) {
       token = req.cookies.accessToken || "";
+      tokenSource = "cookie";
     }
 
     if (
@@ -38,7 +41,7 @@ export const requireAuth = async (
     ) {
       const message = token === "{{accessToken}}" 
         ? "Unauthorized - Postman variable {{accessToken}} is not set. Please run the Login request first."
-        : "Unauthorized - Invalid or malformed token format";
+        : `Unauthorized - Invalid or missing token`;
 
       return res.status(401).json({
         success: false,

@@ -21,18 +21,21 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
 
   const { accessToken, refreshToken, user } = result;
 
+  const cookieOptions: any = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  };
+
   // Set tokens in httpOnly cookies
   res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    ...cookieOptions,
     maxAge: 1 * 60 * 60 * 1000, // 1 hour
   });
 
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
@@ -48,8 +51,18 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
 });
 
 const signOut = catchAsync(async (req: Request, res: Response) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -84,8 +97,9 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   // Set new accessToken in httpOnly cookie
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
     maxAge: 1 * 60 * 60 * 1000, // 1 hour
   });
 
