@@ -18,7 +18,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     statusCode = 400;
     message = `Upload Error: ${err.message}`;
   }
-
+  console.log(err);
   return res.status(statusCode).json({
     success: false,
     message,
@@ -26,5 +26,4 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 };
-
 export default globalErrorHandler;

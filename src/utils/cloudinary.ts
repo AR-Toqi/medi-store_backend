@@ -1,14 +1,16 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
   api_key: process.env.CLOUDINARY_API_KEY as string,
   api_secret: process.env.CLOUDINARY_API_SECRET as string,
 });
+
+// Basic check to ensure keys are loaded
+if (!process.env.CLOUDINARY_API_KEY) {
+  console.error("WARNING: Cloudinary API Key is missing. Image uploads will fail.");
+}
 
 export const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
