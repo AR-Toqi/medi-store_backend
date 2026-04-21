@@ -124,7 +124,7 @@ const deleteSeller = async (id: string) => {
 
 const getStats = async () => {
   const [userCount, sellerCount, medicineCount, orderCount, revenue] = await Promise.all([
-    prisma.user.count(),
+    prisma.user.count({ where: { role: { not: "ADMIN" } } }),
     prisma.sellerProfile.count(),
     prisma.medicine.count(),
     prisma.order.count(),
