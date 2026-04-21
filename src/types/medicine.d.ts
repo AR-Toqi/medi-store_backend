@@ -5,7 +5,7 @@ export interface CreateMedicineInput {
   price: number;
   stock: number;
   manufacturer?: string | undefined;
-  dosage?: string | undefined;
+  dosageForm?: string | undefined;
   sellerId?: string | undefined;
   isFeatured?: boolean | undefined;
   imageUrl?: string | undefined;
@@ -18,7 +18,7 @@ export interface UpdateMedicineInput {
   price?: number | undefined;
   stock?: number | undefined;
   manufacturer?: string | undefined;
-  dosage?: string | undefined;
+  dosageForm?: string | undefined;
   isFeatured?: boolean | undefined;
   imageUrl?: string | undefined;
 }

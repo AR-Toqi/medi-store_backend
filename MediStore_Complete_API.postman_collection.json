@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "4fe2cb6d-9413-406c-9da9-fa38dde63d53",
     "name": "MediStore API - FULL",
-    "description": "Complete API collection for MediStore including Refactored Auth, Multi-Seller, Admin Dashboard, and Order Management.",
+    "description": "Complete API collection for MediStore including Refactored Auth, Multi-Seller, Admin Dashboard, Order Management, and Reviews.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -91,7 +91,7 @@
           "response": []
         },
         {
-          "name": "Login (Customer)",
+          "name": "Login (Customer/Seller)",
           "event": [
             {
               "listen": "test",
@@ -100,7 +100,7 @@
                   "const response = pm.response.json();",
                   "if (pm.response.code === 200 && response.success) {",
                   "    pm.collectionVariables.set(\"accessToken\", response.data.accessToken);",
-                  "    console.log(\"Customer Token Saved!\");",
+                  "    console.log(\"User Token Saved!\");",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -142,6 +142,28 @@
               "raw": "{{baseURL}}/auth/logout",
               "host": ["{{baseURL}}"],
               "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"refresh_token_from_cookie_or_store\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/auth/refresh-token",
+              "host": ["{{baseURL}}"],
+              "path": ["auth", "refresh-token"]
             }
           },
           "response": []
@@ -207,195 +229,10 @@
       ]
     },
     {
-      "name": "Address Management",
+      "name": "Medicines & Categories (Public)",
       "item": [
         {
-          "name": "Create Address",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"fullName\": \"Jane Doe\",\n    \"phone\": \"018xxxxxxxx\",\n    \"country\": \"Bangladesh\",\n    \"city\": \"Dhaka\",\n    \"state\": \"Dhaka\",\n    \"area\": \"Dhanmondi\",\n    \"postalCode\": \"1209\",\n    \"addressLine\": \"Road 15, House 10\",\n    \"label\": \"Home\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseURL}}/addresses",
-              "host": ["{{baseURL}}"],
-              "path": ["addresses"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get My Addresses",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/addresses",
-              "host": ["{{baseURL}}"],
-              "path": ["addresses"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Single Address",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/addresses/:id",
-              "host": ["{{baseURL}}"],
-              "path": ["addresses", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Address",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"city\": \"Chittagong\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseURL}}/addresses/:id",
-              "host": ["{{baseURL}}"],
-              "path": ["addresses", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Address",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseURL}}/addresses/:id",
-              "host": ["{{baseURL}}"],
-              "path": ["addresses", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Seller Onboarding",
-      "item": [
-        {
-          "name": "Become a Seller",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "shopName",
-                  "value": "Healthy Pharmacy",
-                  "type": "text"
-                },
-                {
-                  "key": "shopDescription",
-                  "value": "Best medicines at the best price.",
-                  "type": "text"
-                },
-                {
-                  "key": "licenseNumber",
-                  "value": "LIC-123456",
-                  "type": "text"
-                },
-                {
-                  "key": "logo",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            },
-            "url": {
-              "raw": "{{baseURL}}/sellers",
-              "host": ["{{baseURL}}"],
-              "path": ["sellers"]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Medicines & Shop",
-      "item": [
-        {
-          "name": "Get All Medicines (Filterable)",
+          "name": "Get All Medicines",
           "request": {
             "method": "GET",
             "header": [],
@@ -404,27 +241,11 @@
               "host": ["{{baseURL}}"],
               "path": ["medicines"],
               "query": [
-                {
-                  "key": "minPrice",
-                  "value": "10"
-                },
-                {
-                  "key": "maxPrice",
-                  "value": "1000"
-                },
-                {
-                  "key": "search",
-                  "value": "napa"
-                },
-                {
-                  "key": "isFeatured",
-                  "value": "true"
-                },
-                {
-                  "key": "categoryId",
-                  "value": "",
-                  "disabled": true
-                }
+                { "key": "minPrice", "value": "10" },
+                { "key": "maxPrice", "value": "1000" },
+                { "key": "search", "value": "napa" },
+                { "key": "isFeatured", "value": "true" },
+                { "key": "categoryId", "value": "", "disabled": true }
               ]
             }
           },
@@ -436,22 +257,41 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseURL}}/medicines/napa-extend-500mg",
+              "raw": "{{baseURL}}/medicines/:slug",
               "host": ["{{baseURL}}"],
-              "path": ["medicines", "napa-extend-500mg"]
+              "path": ["medicines", ":slug"],
+              "variable": [
+                { "key": "slug", "value": "napa-extend-500mg" }
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "Get Categories",
+          "name": "Get All Categories",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseURL}}/categories/categories",
+              "raw": "{{baseURL}}/categories",
               "host": ["{{baseURL}}"],
-              "path": ["categories", "categories"]
+              "path": ["categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/categories/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["categories", ":id"],
+              "variable": [
+                { "key": "id", "value": "category_id" }
+              ]
             }
           },
           "response": []
@@ -461,6 +301,25 @@
     {
       "name": "Cart",
       "item": [
+        {
+          "name": "Get Cart Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/cart",
+              "host": ["{{baseURL}}"],
+              "path": ["cart"]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Add to Cart",
           "request": {
@@ -481,25 +340,6 @@
                 }
               }
             },
-            "url": {
-              "raw": "{{baseURL}}/cart",
-              "host": ["{{baseURL}}"],
-              "path": ["cart"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Cart Items",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
             "url": {
               "raw": "{{baseURL}}/cart",
               "host": ["{{baseURL}}"],
@@ -533,10 +373,7 @@
               "host": ["{{baseURL}}"],
               "path": ["cart", ":medicineId"],
               "variable": [
-                {
-                  "key": "medicineId",
-                  "value": ""
-                }
+                { "key": "medicineId", "value": "" }
               ]
             }
           },
@@ -558,10 +395,7 @@
               "host": ["{{baseURL}}"],
               "path": ["cart", ":medicineId"],
               "variable": [
-                {
-                  "key": "medicineId",
-                  "value": ""
-                }
+                { "key": "medicineId", "value": "" }
               ]
             }
           },
@@ -589,10 +423,159 @@
       ]
     },
     {
-      "name": "Orders",
+      "name": "Addresses",
       "item": [
         {
-          "name": "Create Order (Checkout)",
+          "name": "Get My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/addresses",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"fullName\": \"Jane Doe\",\n    \"phone\": \"018xxxxxxxx\",\n    \"country\": \"Bangladesh\",\n    \"city\": \"Dhaka\",\n    \"state\": \"Dhaka\",\n    \"area\": \"Dhanmondi\",\n    \"postalCode\": \"1209\",\n    \"addressLine\": \"Road 15, House 10\",\n    \"label\": \"Home\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/addresses",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Address",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/addresses/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"city\": \"Chittagong\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/addresses/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Default Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/addresses/:id/default",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses", ":id", "default"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/addresses/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["addresses", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders (Customer)",
+      "item": [
+        {
+          "name": "Checkout (Create Order)",
           "request": {
             "method": "POST",
             "header": [
@@ -639,6 +622,28 @@
           "response": []
         },
         {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/orders/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["orders", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Cancel Order",
           "request": {
             "method": "PATCH",
@@ -654,10 +659,7 @@
               "host": ["{{baseURL}}"],
               "path": ["orders", ":id", "cancel"],
               "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
+                { "key": "id", "value": "" }
               ]
             }
           },
@@ -666,10 +668,175 @@
       ]
     },
     {
-      "name": "Seller Dashboard",
+      "name": "Reviews",
       "item": [
         {
-          "name": "Get Stats",
+          "name": "Get Reviews by Medicine",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/reviews/medicine/:medicineId",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews", "medicine", ":medicineId"],
+              "variable": [
+                { "key": "medicineId", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Medicine Rating Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseURL}}/reviews/medicine/:medicineId/stats",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews", "medicine", ":medicineId", "stats"],
+              "variable": [
+                { "key": "medicineId", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Reviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reviews/my-reviews",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews", "my-reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"medicineId\": \"medicine_uuid\",\n    \"rating\": 5,\n    \"comment\": \"Excellent service and fast delivery!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/reviews",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 4,\n    \"comment\": \"Actually, it was just okay.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/reviews/:reviewId",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews", ":reviewId"],
+              "variable": [
+                { "key": "reviewId", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/reviews/:reviewId",
+              "host": ["{{baseURL}}"],
+              "path": ["reviews", ":reviewId"],
+              "variable": [
+                { "key": "reviewId", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Seller Hub",
+      "item": [
+        {
+          "name": "Become a Seller (Onboarding)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "shopName", "value": "Healthy Pharmacy", "type": "text" },
+                { "key": "shopDescription", "value": "Best medicines at the best price.", "type": "text" },
+                { "key": "licenseNumber", "value": "LIC-123456", "type": "text" },
+                { "key": "logo", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/sellers",
+              "host": ["{{baseURL}}"],
+              "path": ["sellers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dashboard Stats",
           "request": {
             "method": "GET",
             "header": [
@@ -688,7 +855,52 @@
           "response": []
         },
         {
-          "name": "My Medicines",
+          "name": "My Profile (Seller)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/seller/profile",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Seller Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "shopName", "value": "Updated Shop Name", "type": "text" },
+                { "key": "logo", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/seller/profile",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Medicines (Seller View)",
           "request": {
             "method": "GET",
             "header": [
@@ -720,52 +932,111 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                {
-                  "key": "name",
-                  "value": "New Medicine",
-                  "type": "text"
-                },
-                {
-                  "key": "categoryId",
-                  "value": "cat_id",
-                  "type": "text"
-                },
-                {
-                  "key": "price",
-                  "value": "15.5",
-                  "type": "text"
-                },
-                {
-                  "key": "stock",
-                  "value": "100",
-                  "type": "text"
-                },
-                {
-                  "key": "manufacturer",
-                  "value": "Pharma Corp",
-                  "type": "text"
-                },
-                {
-                  "key": "description",
-                  "value": "Effective medicine for...",
-                  "type": "text"
-                },
-                {
-                  "key": "dosage",
-                  "value": "500mg",
-                  "type": "text"
-                },
-                {
-                  "key": "image",
-                  "type": "file",
-                  "src": []
-                }
+                { "key": "name", "value": "New Medicine", "type": "text" },
+                { "key": "categoryId", "value": "cat_uuid", "type": "text" },
+                { "key": "price", "value": "15.5", "type": "text" },
+                { "key": "stock", "value": "100", "type": "text" },
+                { "key": "manufacturer", "value": "Pharma Corp", "type": "text" },
+                { "key": "description", "value": "Effective medicine for...", "type": "text" },
+                { "key": "dosage", "value": "500mg", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
               ]
             },
             "url": {
               "raw": "{{baseURL}}/seller/medicines",
               "host": ["{{baseURL}}"],
               "path": ["seller", "medicines"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Medicine",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "price", "value": "18.0", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/seller/medicines/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "medicines", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Featured Medicine",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/seller/medicines/:id/featured",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "medicines", ":id", "featured"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Medicine",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/seller/medicines/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "medicines", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "My Sales (Orders)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/seller/orders",
+              "host": ["{{baseURL}}"],
+              "path": ["seller", "orders"]
             }
           },
           "response": []
@@ -795,10 +1066,7 @@
               "host": ["{{baseURL}}"],
               "path": ["seller", "orders", ":id"],
               "variable": [
-                {
-                  "key": "id",
-                  "value": ""
-                }
+                { "key": "id", "value": "" }
               ]
             }
           },
@@ -807,267 +1075,241 @@
       ]
     },
     {
-      "name": "Admin Panel",
+      "name": "Admin Dashboard",
       "item": [
         {
-          "name": "User Management",
-          "item": [
-            {
-              "name": "Get All Users",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseURL}}/admin/users",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "users"]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Update User Status (Ban/Unban)",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n    \"isBanned\": true\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "{{baseURL}}/admin/users/:id",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "users", ":id"],
-                  "variable": [
-                    {
-                      "key": "id",
-                      "value": ""
-                    }
-                  ]
-                }
-              },
-              "response": []
+          "name": "All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/users",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "users"]
             }
-          ]
+          },
+          "response": []
         },
         {
-          "name": "Seller Management",
-          "item": [
-            {
-              "name": "Get All Sellers (Admin)",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseURL}}/admin/sellers",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "sellers"]
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"BLOCKED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-              },
-              "response": []
+              }
             },
-            {
-              "name": "Delete Seller Profile (Inactive Only)",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "description": "Deletes a seller profile. This will only work if the associated User account is already banned (isBanned: true).",
-                "url": {
-                  "raw": "{{baseURL}}/admin/sellers/:id",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "sellers", ":id"],
-                  "variable": [
-                    {
-                      "key": "id",
-                      "value": ""
-                    }
-                  ]
-                }
-              },
-              "response": []
+            "url": {
+              "raw": "{{baseURL}}/admin/users/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
             }
-          ]
+          },
+          "response": []
         },
         {
-          "name": "Order Management",
-          "item": [
-            {
-              "name": "Get All Orders (Admin)",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseURL}}/admin/orders",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "orders"]
-                }
-              },
-              "response": []
+          "name": "All Sellers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/sellers",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "sellers"]
             }
-          ]
+          },
+          "response": []
         },
         {
-          "name": "Category Management",
-          "item": [
-            {
-              "name": "Get All Categories (Admin)",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseURL}}/admin/categories",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "categories"]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Create Category",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Antibiotics",
-                      "type": "text"
-                    },
-                    {
-                      "key": "description",
-                      "value": "Medicines that destroy or inhibit the growth of microorganisms.",
-                      "type": "text"
-                    },
-                    {
-                      "key": "image",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseURL}}/admin/categories",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "categories"]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Update Category",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "name",
-                      "value": "Antibiotics Updated",
-                      "type": "text"
-                    },
-                    {
-                      "key": "image",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{baseURL}}/admin/categories/:id",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "categories", ":id"],
-                  "variable": [
-                    {
-                      "key": "id",
-                      "value": ""
-                    }
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Delete Category",
-              "request": {
-                "method": "DELETE",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{accessToken}}",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseURL}}/admin/categories/:id",
-                  "host": ["{{baseURL}}"],
-                  "path": ["admin", "categories", ":id"],
-                  "variable": [
-                    {
-                      "key": "id",
-                      "value": ""
-                    }
-                  ]
-                }
-              },
-              "response": []
+          "name": "All Orders (Admin View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/orders",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "orders"]
             }
-          ]
+          },
+          "response": []
+        },
+        {
+          "name": "Force Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"DELIVERED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/orders/:id/status",
+              "host": ["{{baseURL}}"],
+              "path": ["orders", ":id", "status"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "All Medicines",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/medicines",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "medicines"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/categories",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "New Category", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/admin/categories",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "categories"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Updated Category", "type": "text" },
+                { "key": "image", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{baseURL}}/admin/categories/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "categories", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/admin/categories/:id",
+              "host": ["{{baseURL}}"],
+              "path": ["admin", "categories", ":id"],
+              "variable": [
+                { "key": "id", "value": "" }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     }
@@ -1075,7 +1317,7 @@
   "variable": [
     {
       "key": "baseURL",
-      "value": "http://localhost:5000/api",
+      "value": "http://localhost:5000/api/v1",
       "type": "string"
     },
     {

@@ -97,6 +97,21 @@ const getMedicineDetails = catchAsync(async (req: AuthRequest, res: Response) =>
   });
 });
 
+const getMedicineById = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id as string;
+  const sellerProfile = await getMySellerProfile(userId);
+  const { id } = req.params;
+
+  const medicine = await medicineService.getMedicineByIdBySeller(sellerProfile.id, id as string);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Medicine details fetched successfully",
+    data: medicine,
+  });
+});
+
 const updateMedicine = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id as string;
   const sellerProfile = await getMySellerProfile(userId);
@@ -259,6 +274,7 @@ export const sellerController = {
   createMedicine,
   getMyMedicines,
   getMedicineDetails,
+  getMedicineById,
   updateMedicine,
   deleteMedicine,
   toggleMedicineFeatured,

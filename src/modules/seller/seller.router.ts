@@ -16,6 +16,7 @@ router.get("/stats", sellerController.getDashboardStats);
 // Medicine Management
 router.get("/medicines", sellerController.getMyMedicines);
 router.post("/medicines", upload.single('image'), sellerController.createMedicine);
+router.get("/medicines/id/:id", sellerController.getMedicineById);
 router.get("/medicines/:slug", sellerController.getMedicineDetails);
 router.patch("/medicines/:id", upload.single('image'), sellerController.updateMedicine);
 router.delete("/medicines/:id", sellerController.deleteMedicine);

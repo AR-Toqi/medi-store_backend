@@ -141,6 +141,7 @@ export const createMedicineForSeller = async (sellerId: string, payload: CreateM
       price: Number(payload.price),
       stock: Number(payload.stock),
       manufacturer: payload.manufacturer || "Unknown",
+      dosageForm: payload.dosageForm || "",
       categoryId: payload.categoryId,
       sellerId,
       isFeatured: String(payload.isFeatured) === "true",
@@ -218,7 +219,7 @@ export const updateMedicineBySeller = async (sellerId: string, medicineId: strin
   if (payload.price !== undefined) updateData.price = Number(payload.price);
   if (payload.stock !== undefined) updateData.stock = Number(payload.stock);
   if (payload.manufacturer !== undefined) updateData.manufacturer = payload.manufacturer;
-  if (payload.dosage !== undefined) updateData.dosage = payload.dosage;
+  if (payload.dosageForm !== undefined) updateData.dosageForm = payload.dosageForm;
   if (payload.categoryId !== undefined) updateData.categoryId = payload.categoryId;
   if (payload.isFeatured !== undefined) updateData.isFeatured = String(payload.isFeatured) === "true";
   
@@ -278,6 +279,16 @@ export const getMedicineDetailsBySeller = async (sellerId: string, slug: string)
   return { ...medicine, price: Number(medicine.price) };
 };
 
+export const getMedicineByIdBySeller = async (sellerId: string, id: string) => {
+  const medicine = await prisma.medicine.findFirst({
+    where: { id, sellerId },
+    include: { category: true, reviews: { include: { user: true } } }
+  });
+
+  if (!medicine) throw new AppError(httpStatus.NOT_FOUND, "Medicine not found");
+  return { ...medicine, price: Number(medicine.price) };
+};
+
 export const medicineService = {
   getAllMedicines,
   getMedicineDetails,
@@ -287,4 +298,5 @@ export const medicineService = {
   deleteMedicineBySeller,
   toggleMedicineFeatured,
   getMedicineDetailsBySeller,
+  getMedicineByIdBySeller,
 };
