@@ -10,6 +10,9 @@ const router = Router();
 // Apply admin authentication and role guard to all routes
 router.use(requireAuth, roleGuard(USER_ROLE.ADMIN));
 
+// Dashboard Stats
+router.get("/stats", adminController.getStats);
+
 // User Management
 router.get("/users", adminController.getAllUsers);
 router.patch("/users/:id", adminController.updateUserStatus);

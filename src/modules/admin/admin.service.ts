@@ -122,7 +122,67 @@ const deleteSeller = async (id: string) => {
   }
 };
 
+const getStats = async () => {
+  const [userCount, sellerCount, medicineCount, orderCount, revenue] = await Promise.all([
+    prisma.user.count(),
+    prisma.sellerProfile.count(),
+    prisma.medicine.count(),
+    prisma.order.count(),
+    prisma.order.aggregate({
+      _sum: {
+        totalAmount: true,
+      },
+      where: {
+        status: {
+          not: "CANCELLED"
+        }
+      }
+    }),
+  ]);
+
+  const recentOrders = await prisma.order.findMany({
+    take: 5,
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      customer: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  const recentUsers = await prisma.user.findMany({
+    take: 5,
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      createdAt: true,
+    },
+  });
+
+  return {
+    totalUsers: userCount,
+    totalSellers: sellerCount,
+    totalMedicines: medicineCount,
+    totalOrders: orderCount,
+    totalRevenue: revenue._sum.totalAmount || 0,
+    recentOrders,
+    recentUsers,
+  };
+};
+
 export const adminService = {
+  getStats,
   getAllUsers,
   updateUserStatus,
   getAllSellers,

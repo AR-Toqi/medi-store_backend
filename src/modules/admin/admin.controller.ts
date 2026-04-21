@@ -170,7 +170,18 @@ const deleteCategory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getStats = catchAsync(async (req: Request, res: Response) => {
+  const result = await adminService.getStats();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Admin stats fetched successfully",
+    data: result,
+  });
+});
+
 export const adminController = {
+  getStats,
   getAllUsers,
   updateUserStatus,
   deleteUser,
