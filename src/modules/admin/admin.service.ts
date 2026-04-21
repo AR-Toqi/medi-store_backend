@@ -50,9 +50,19 @@ const deleteUser = async (id: string) => {
     );
   }
 
-  await prisma.user.delete({
-    where: { id },
-  });
+  try {
+    await prisma.user.delete({
+      where: { id },
+    });
+  } catch (error: any) {
+    if (error.code === "P2003") {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        "This user cannot be deleted because they have associated data (e.g., orders, reviews). Please keep the user banned instead to maintain platform history."
+      );
+    }
+    throw error;
+  }
 };
 
 const getAllSellers = async () => {
