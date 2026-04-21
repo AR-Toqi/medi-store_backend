@@ -75,7 +75,7 @@ const signIn = async (payload: any) => {
   const accessToken = generateAccessToken(
     jwtPayload,
     process.env.BETTER_AUTH_SECRET as string,
-    "1h"
+    "1d"
   );
 
   const refreshToken = generateRefreshToken(
@@ -158,7 +158,7 @@ const refreshToken = async (token: string) => {
     const accessToken = generateAccessToken(
       jwtPayload,
       process.env.BETTER_AUTH_SECRET as string,
-      "1h"
+      "1d"
     );
 
     return {

@@ -31,7 +31,7 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
   // Set tokens in httpOnly cookies
   res.cookie("accessToken", accessToken, {
     ...cookieOptions,
-    maxAge: 1 * 60 * 60 * 1000, // 1 hour
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 
   res.cookie("refreshToken", refreshToken, {
@@ -100,7 +100,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
-    maxAge: 1 * 60 * 60 * 1000, // 1 hour
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 
   sendResponse(res, {

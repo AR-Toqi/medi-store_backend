@@ -69,7 +69,12 @@ export const getAllMedicines = async (params: GetMedicinesParams) => {
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: { category: true },
+      include: { 
+        category: true,
+        seller: {
+          select: { shopName: true }
+        }
+      },
     })
   ]);
 
