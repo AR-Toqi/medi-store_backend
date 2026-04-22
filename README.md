@@ -162,6 +162,24 @@ CLOUDINARY_API_SECRET=xxx
 
 ---
 
+## 🚀 Challenges I Face
+- **Backend Architecture** — Managing the complex structure of a role-based system while ensuring scalability and security.
+- **System Visualization** — Spending significant time researching existing medical platforms to clearly visualize and architect every core feature.
+- **Media & File Handling** — Mastering the integration of **Multer** and **Cloudinary** for seamless image and file management across different modules.
+
+---
+
+## 🛠 Future Implementations
+- **Medicine Expiry Date Tracking** — Add an expiry date field to medicines. The system will automatically monitor expiry dates and send notifications to the admin when a medicine is about to expire or has expired. The admin can then review and remove expired medicines from the platform to ensure customer safety.
+
+- **Seller Verification by Admin** — Currently, sellers can onboard and start listing immediately. In the future, new seller profiles will require admin verification before they can list medicines. Admins will be able to review seller credentials (license number, shop details) and approve or reject seller applications, adding an extra layer of trust and quality control to the platform.
+
+- **Payment Gateway Integration** — Integrate online payment options (SSLCommerz, Stripe, etc.) alongside the existing Cash on Delivery method.
+
+- **Product Reviews & Ratings** — Enable customers to leave reviews and ratings on medicines they have purchased, helping other buyers make informed decisions.
+
+---
+
 ## 👨‍💻 Author
 **Abdullah Ragib Toqi**  
 GitHub: https://github.com/AR-Toqi
