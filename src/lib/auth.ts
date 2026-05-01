@@ -13,6 +13,23 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      // callbackUrl: process.env.GOOGLE_CALLBACK_URL as string, mapProfileToUser: ()=>{
+      mapProfileToUser: () => {
+        return {
+          role: USER_ROLE.CUSTOMER,
+          isBanned: false,
+          needPasswordChange: false,
+          emailVerified: true,
+        }
+      }
+    }
   },
   trustedOrigins: [process.env.APP_URL!, process.env.BETTER_AUTH_URL!],
   user: {
@@ -23,6 +40,11 @@ export const auth = betterAuth({
         required: false,
       },
       isBanned: {
+        type: "boolean",
+        defaultValue: false,
+        required: false,
+      },
+      needsPasswordChange: {
         type: "boolean",
         defaultValue: false,
         required: false,

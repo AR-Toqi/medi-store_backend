@@ -46,6 +46,7 @@ model User {
   sellerProfile SellerProfile?
   role          String?        @default("CUSTOMER")
   isBanned      Boolean?       @default(false)
+  needsPasswordChange Boolean?  @default(false)
   verificationCode String?
   verificationCodeExpires DateTime?
 
