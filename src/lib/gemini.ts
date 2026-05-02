@@ -14,7 +14,7 @@ export const generateChatResponse = async (prompt: string): Promise<string> => {
       model: "gemini-3-flash-preview",
       contents: prompt,
     });
-    
+
     return response.text || "No response generated";
   } catch (error) {
     console.error("Error generating chat response:", error);

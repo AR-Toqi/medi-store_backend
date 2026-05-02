@@ -125,7 +125,7 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       : mappedHistory;
 
     const chat = ai.chats.create({
-      model: "gemini-flash-latest",
+      model: "models/gemini-3.1-flash-lite-preview",
       history: finalHistory,
       config: {
         systemInstruction: systemInstruction,
