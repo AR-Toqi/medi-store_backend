@@ -1,0 +1,176 @@
+{
+	"info": {
+		"_postman_id": "3a43493e-5cef-48d4-971b-87a6f33e4079",
+		"name": "Medistore API",
+		"description": "API collection for testing Medistore backend with AI features.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "AI Features",
+			"item": [
+				{
+					"name": "AI Chat Assistant",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"message\": \"What medicines do you have for fever?\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ai/chat",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ai",
+								"chat"
+							]
+						},
+						"description": "Send a natural language message to the AI Support Agent. It will use function calling to query the database."
+					},
+					"response": []
+				},
+				{
+					"name": "Semantic Search",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ai/search?query=headache medicine&limit=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ai",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "headache medicine",
+									"description": "Natural language search query"
+								},
+								{
+									"key": "limit",
+									"value": "5",
+									"description": "Number of results to return"
+								}
+							]
+						},
+						"description": "Perform a semantic (vector) search for medicines. Requires vectors to be populated in the database."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}

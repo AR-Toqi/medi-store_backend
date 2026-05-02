@@ -89,6 +89,7 @@ model Medicine {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  vector    Unsupported("vector(3072)")? // gemini-embedding-2 produces 3072 dimensions
 }
 
 model SellerProfile {

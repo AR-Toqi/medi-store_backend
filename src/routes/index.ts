@@ -10,6 +10,7 @@ import { cartItemRoutes } from "../modules/cartItem/cartItem.router";
 import { reviewRoutes } from "../modules/reviews/reviews.router";
 import { adminRoutes } from "../modules/admin/admin.router";
 import { addressRoutes } from "../modules/address/address.router";
+import { AIRoutes } from "../modules/ai/ai.router";
 
 const router = Router();
 
@@ -57,6 +58,10 @@ const moduleRoutes = [
   {
     path: "/admin",
     route: adminRoutes,
+  },
+  {
+    path: "/ai",
+    route: AIRoutes,
   },
 ];
 
