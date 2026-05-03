@@ -1,7 +1,6 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import ejs from "ejs";
 import path from 'path';
-
 
 interface ISendEmailOptions {
     to: string;
@@ -11,21 +10,14 @@ interface ISendEmailOptions {
     html?: string;
 }
 
+// Initialize with your API Key from https://resend.com
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 /**
- * sendEmail helper function to send emails using nodemailer and ejs templates
+ * sendEmail helper function to send emails using Resend and ejs templates
  */
 export const sendEmail = async (options: ISendEmailOptions) => {
     const { to, subject, templateName, templateData, html: explicitHtml } = options;
-
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
-        auth: {
-            user: process.env.APP_USER || process.env.SMTP_USER,
-            pass: process.env.APP_PASS || process.env.SMTP_PASS,
-        },
-    });
 
     let html = explicitHtml;
 
@@ -38,10 +30,17 @@ export const sendEmail = async (options: ISendEmailOptions) => {
         throw new Error("Either 'html' or 'templateName' must be provided to sendEmail.");
     }
 
-    await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.APP_USER || process.env.SMTP_USER,
-        to,
+    const { data, error } = await resend.emails.send({
+        from: process.env.SMTP_FROM || 'onboarding@resend.dev', // Use your verified domain once set up
+        to: [to],
         subject,
         html,
     });
+
+    if (error) {
+        console.error("Error sending email via Resend:", error);
+        throw new Error(`Error sending email: ${error.message}`);
+    }
+
+    console.log("Email sent successfully:", data);
 };

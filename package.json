@@ -45,9 +45,9 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
-    "nodemailer": "^7.0.13",
     "pg": "^8.17.2",
     "prisma": "^7.3.0",
+    "resend": "^6.12.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
