@@ -210,12 +210,12 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
-  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
   res.redirect(`${appUrl}/login-success`);
 });
 
 const handleOAuthError = catchAsync(async (req: Request, res: Response) => {
-  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
   const error = req.query.error || "unknown_error";
   res.redirect(`${appUrl}/login-error?error=${error}`);
 });
