@@ -211,7 +211,11 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
   }
 
   const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
-  res.redirect(`${appUrl}/login-success`);
+  
+  // Use the new frontend bridge to set cookies on the frontend domain
+  const redirectUrl = `${appUrl}/api/auth/set-session?accessToken=${accessToken}&refreshToken=${refreshToken}${sessionToken ? `&sessionToken=${sessionToken}` : ""}`;
+  
+  res.redirect(redirectUrl);
 });
 
 const handleOAuthError = catchAsync(async (req: Request, res: Response) => {
