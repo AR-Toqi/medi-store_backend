@@ -246,14 +246,18 @@ const resetPassword = async (payload: { email: string, otp: string, password: st
 const googleLogin = async (reqHeaders: any) => {
   // Convert Express headers to standard Web API Headers so Better Auth can read host/origin
   const webHeaders = new Headers(reqHeaders as Record<string, string>);
+
+  const betterAuthUrl = process.env.BETTER_AUTH_URL?.replace(/\/$/, "");
+  const callbackURL = `${betterAuthUrl}/api/auth/google/success`;
   
-  // We must ask Better Auth to return headers so we can proxy the OAuth state cookie
+  console.log("Initiating Google Login with callbackURL:", callbackURL);
+
   const response: any = await auth.api.signInSocial({
     headers: webHeaders,
     returnHeaders: true, 
     body: {
       provider: "google",
-      callbackURL: `${process.env.BETTER_AUTH_URL}/api/auth/google/success`, 
+      callbackURL, 
     },
   });
   
