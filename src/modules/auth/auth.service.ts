@@ -253,7 +253,7 @@ const googleLogin = async (reqHeaders: any) => {
     returnHeaders: true, 
     body: {
       provider: "google",
-      callbackURL: `${process.env.BETTER_AUTH_URL}/google/success`, 
+      callbackURL: `${process.env.BETTER_AUTH_URL}/api/auth/google/success`, 
     },
   });
   
