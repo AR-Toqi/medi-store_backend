@@ -1,46 +1,93 @@
-import { Resend } from 'resend';
 import ejs from "ejs";
+import status from 'http-status';
 import path from 'path';
+import { BrevoClient } from '@getbrevo/brevo';
+import fs from "fs";
+import AppError from "../errors/AppError";
 
-interface ISendEmailOptions {
+// Initialize with your API Key
+const brevo = new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY!,
+});
+
+export interface ISendEmailOptions {
     to: string;
     subject: string;
     templateName?: string;
-    templateData?: any;
+    templateData?: Record<string, any>;
     html?: string;
+    attachments?: {
+        filename: string;
+        content: Buffer | string;
+        contentType: string;
+    }[];
 }
 
-// Initialize with your API Key from https://resend.com
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const sendEmail = async ({
+    to,
+    subject,
+    templateName,
+    templateData,
+    html: explicitHtml,
+    attachments,
+}: ISendEmailOptions) => {
+    try {
+        let finalHtml = explicitHtml;
 
-/**
- * sendEmail helper function to send emails using Resend and ejs templates
- */
-export const sendEmail = async (options: ISendEmailOptions) => {
-    const { to, subject, templateName, templateData, html: explicitHtml } = options;
+        if (!finalHtml && templateName) {
+            // ── Resolve template path ─────────────────────────────────────
+            const builtPath = path.resolve(process.cwd(), "dist/src/app/views/emails", `${templateName}.ejs`);
+            const sourcePath = path.resolve(process.cwd(), "src/app/views/emails", `${templateName}.ejs`);
+            const currentFileDir = __dirname;
+            const relativeTemplatePath = path.resolve(currentFileDir, "../views/emails", `${templateName}.ejs`);
 
-    let html = explicitHtml;
+            let templatePath = "";
+            if (fs.existsSync(builtPath)) templatePath = builtPath;
+            else if (fs.existsSync(sourcePath)) templatePath = sourcePath;
+            else if (fs.existsSync(relativeTemplatePath)) templatePath = relativeTemplatePath;
 
-    if (!html && templateName) {
-        const templatePath = path.join(process.cwd(), 'src', 'app', 'views', 'emails', `${templateName}.ejs`);
-        html = await ejs.renderFile(templatePath, templateData);
+            if (!templatePath) {
+                console.error(`[Email] ❌ Template not found: ${templateName}`, { builtPath, sourcePath });
+                throw new AppError(status.INTERNAL_SERVER_ERROR, `Email template ${templateName} not found`);
+            }
+
+            console.log(`[Email] Using template: ${templatePath}`);
+            finalHtml = await ejs.renderFile(templatePath, templateData);
+        }
+
+        if (!finalHtml) {
+            throw new AppError(status.INTERNAL_SERVER_ERROR, "Either 'html' or 'templateName' must be provided to sendEmail");
+        }
+
+        // ── Send via Brevo ────────────────────────────────────────────
+        console.log(`[Email] Sending to ${to} via Brevo...`);
+
+        const response = await brevo.transactionalEmails.sendTransacEmail({
+            subject,
+            htmlContent: finalHtml,
+            sender: {
+                name: process.env.BREVO_FROM_NAME as string,
+                email: process.env.BREVO_FROM_EMAIL as string,
+            },
+            to: [{ email: to }],
+            ...(attachments?.length && {
+                attachment: attachments.map((a) => ({
+                    name: a.filename,
+                    content: Buffer.isBuffer(a.content)
+                        ? a.content.toString('base64')
+                        : Buffer.from(a.content as string).toString('base64'),
+                })),
+            }),
+        });
+
+        console.log(`[Email] ✅ Email sent to ${to} — messageId=${(response as any)?.messageId}`);
+
+    } catch (error: any) {
+        console.error("[Email] ❌ sendEmail failed:", {
+            message: error?.message,
+            brevoDetails: error?.body || error, // Captures actual Brevo API errors
+            templateName,
+        });
+        throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to send email");
     }
-
-    if (!html) {
-        throw new Error("Either 'html' or 'templateName' must be provided to sendEmail.");
-    }
-
-    const { data, error } = await resend.emails.send({
-        from: process.env.SMTP_FROM || 'onboarding@resend.dev', // Use your verified domain once set up
-        to: [to],
-        subject,
-        html,
-    });
-
-    if (error) {
-        console.error("Error sending email via Resend:", error);
-        throw new Error(`Error sending email: ${error.message}`);
-    }
-
-    console.log("Email sent successfully:", data);
 };

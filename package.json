@@ -27,6 +27,7 @@
     "ts-node": "^10.9.2"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^5.0.4",
     "@google/genai": "^1.51.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.3.0",
@@ -47,7 +48,6 @@
     "multer-storage-cloudinary": "^4.0.0",
     "pg": "^8.17.2",
     "prisma": "^7.3.0",
-    "resend": "^6.12.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
