@@ -146,6 +146,7 @@ CLOUDINARY_API_SECRET=xxx
 ---
 
 ## ✅ Features Overview
+- **🤖 AI-Powered Customer Support Agent** — Database-aware conversational agent using Google Gemini (via function calling) to accurately answer product, category, and stock inquiries in real-time.
 - Role-based access control (Admin, Seller, Customer)
 - Secure authentication & session management via Better Auth
 - Seller & customer-specific workflows
@@ -163,6 +164,7 @@ CLOUDINARY_API_SECRET=xxx
 ---
 
 ## 🚀 Challenges I Face
+- **Vector Embeddings & Vector DB Implementation** — I initially attempted to build the AI Support Agent's semantic search using Vector Embeddings and a dedicated Vector Database. However, managing the complexity of generating, synchronizing, and querying high-dimensional vectors for medical terminology was highly resource-intensive. To overcome this, I pivoted to an elegant solution using **Gemini Function Calling**, which allows the AI to query the structured PostgreSQL/Prisma database directly in real-time. This bypassed the need for vector synchronization overhead while maintaining extremely fast and accurate medical queries.
 - **Backend Architecture** — Managing the complex structure of a role-based system while ensuring scalability and security.
 - **System Visualization** — Spending significant time researching existing medical platforms to clearly visualize and architect every core feature.
 - **Media & File Handling** — Mastering the integration of **Multer** and **Cloudinary** for seamless image and file management across different modules.
