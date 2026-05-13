@@ -25,10 +25,11 @@ const mapTaskType = (taskType?: EmbeddingTaskType): TaskType => {
     case "classification": return TaskType.CLASSIFICATION;
     case "clustering": return TaskType.CLUSTERING;
     case "similarity": return TaskType.SEMANTIC_SIMILARITY;
-    case "fact_checking": return TaskType.FACT_CHECKING;
+    case "fact_checking": return TaskType.RETRIEVAL_QUERY; // Fallback to RETRIEVAL_QUERY
     default: return TaskType.RETRIEVAL_QUERY;
   }
 };
+
 
 export const generateEmbedding = async (
   text: string,
@@ -36,10 +37,10 @@ export const generateEmbedding = async (
 ): Promise<number[]> => {
   try {
     const result = await model.embedContent({
-      content: { parts: [{ text }] },
+      content: { role: "user", parts: [{ text }] },
       taskType: mapTaskType(options?.taskType),
       title: options?.title,
-    });
+    } as any);
 
     if (result.embedding?.values) {
       return result.embedding.values;

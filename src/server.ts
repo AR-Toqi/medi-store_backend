@@ -6,32 +6,32 @@ import { config } from "./config";
 const PORT = config.port || 5000;
 
 async function bootstrap() {
-  try {
-    // Database connection
-    await prisma.$connect();
+    try {
+        // Database connection
+        await prisma.$connect();
 
-    // Start server
-    const server = app.listen(PORT, () => {
-      // Keep it minimal for production logs
-    });
-
-    // Handle process signals for graceful shutdown
-    const exitHandler = () => {
-      if (server) {
-        server.close(() => {
-          process.exit(1);
+        // Start server
+        const server = app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
         });
-      } else {
+
+        // Handle process signals for graceful shutdown
+        const exitHandler = () => {
+            if (server) {
+                server.close(() => {
+                    process.exit(1);
+                });
+            } else {
+                process.exit(1);
+            }
+        };
+
+        process.on("uncaughtException", exitHandler);
+        process.on("unhandledRejection", exitHandler);
+
+    } catch (error) {
         process.exit(1);
-      }
-    };
-
-    process.on("uncaughtException", exitHandler);
-    process.on("unhandledRejection", exitHandler);
-
-  } catch (error) {
-    process.exit(1);
-  }
+    }
 }
 
 bootstrap();
