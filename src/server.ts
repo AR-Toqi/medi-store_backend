@@ -16,4 +16,9 @@ async function main() {
     }
 };
 
-main();
+console.log("Starting MediStore Backend...");
+
+main().catch(err => {
+    console.error("CRITICAL: Unhandled error during startup:", err);
+    process.exit(1);
+});

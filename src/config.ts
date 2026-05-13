@@ -18,3 +18,20 @@ export const config = {
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
 };
+
+// Validation for critical variables
+const requiredVars = [
+  { name: 'DATABASE_URL', value: config.database_url },
+  { name: 'BETTER_AUTH_SECRET', value: config.better_auth_secret },
+  { name: 'GOOGLE_API_KEY', value: config.google_api_key },
+];
+
+console.log("--- Environment Validation ---");
+requiredVars.forEach(v => {
+  if (!v.value) {
+    console.warn(`MISSING: ${v.name} is not defined!`);
+  } else {
+    console.log(`OK: ${v.name} is present`);
+  }
+});
+console.log("------------------------------");
