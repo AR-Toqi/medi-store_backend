@@ -250,7 +250,7 @@ const googleLogin = async (reqHeaders: any) => {
   const betterAuthUrl = process.env.BETTER_AUTH_URL?.replace(/\/$/, "");
   const callbackURL = `${betterAuthUrl}/api/auth/google/success`;
   
-  console.log("Initiating Google Login with callbackURL:", callbackURL);
+  // Initiating Google Login (Removed log per user request)
 
   const response: any = await auth.api.signInSocial({
     headers: webHeaders,

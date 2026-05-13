@@ -69,7 +69,6 @@ export const generateEmbedding = async (
 
     throw new Error("No embeddings returned from model");
   } catch (error) {
-    console.error("Error generating embedding:", error);
     throw new Error("Failed to generate embedding");
   }
 };

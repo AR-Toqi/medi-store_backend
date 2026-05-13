@@ -5,8 +5,6 @@ import { generateEmbedding } from "../../lib/embeddings";
  * Script to generate embeddings for all medicines that don't have them.
  */
 export const syncMedicineVectors = async () => {
-  console.log("Starting medicine vector synchronization...");
-  
   try {
     const medicines: any[] = await prisma.$queryRaw`
       SELECT id, name, description, manufacturer 
@@ -14,12 +12,8 @@ export const syncMedicineVectors = async () => {
       WHERE vector IS NULL
     `;
 
-    console.log(`Found ${medicines.length} medicines needing vectors.`);
-
     for (const medicine of medicines) {
       try {
-        console.log(`Generating embedding for: ${medicine.name}`);
-        
         // Create a descriptive prompt for the embedding
         const prompt = `title: ${medicine.name} | description: ${medicine.description || ""} | manufacturer: ${medicine.manufacturer}`;
         
@@ -36,15 +30,12 @@ export const syncMedicineVectors = async () => {
           WHERE id = '${medicine.id}'
         `);
 
-        console.log(`Successfully updated vector for: ${medicine.name}`);
       } catch (err) {
-        console.error(`Failed to update vector for ${medicine.name}:`, err);
+        // Silently continue for individual failures
       }
     }
-
-    console.log("Synchronization complete!");
   } catch (error) {
-    console.error("Critical error during synchronization:", error);
+    // Critical error caught
   }
 };
 

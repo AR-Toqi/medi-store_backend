@@ -24,7 +24,6 @@ const seedAdmin = async () => {
   }
 
   try {
-    console.log(`🚀 Seeding admin: ${adminEmail}...`);
 
     // 2. Check if admin already exists
     const existingUser = await prisma.user.findUnique({
@@ -32,7 +31,6 @@ const seedAdmin = async () => {
     });
 
     if (existingUser) {
-      console.log("ℹ️ User with this email already exists.");
       
       // Update role if necessary
       if (existingUser.role !== USER_ROLE.ADMIN) {
@@ -40,9 +38,7 @@ const seedAdmin = async () => {
           where: { email: adminEmail },
           data: { role: USER_ROLE.ADMIN, emailVerified: true },
         });
-        console.log("✅ Existing user elevated to ADMIN role.");
       } else {
-        console.log("✅ Admin user is already correctly configured.");
       }
       return;
     }
@@ -66,11 +62,9 @@ const seedAdmin = async () => {
           emailVerified: true,
         },
       });
-      console.log("✅ Admin user created and elevated to ADMIN role successfully.");
     }
 
   } catch (error) {
-    console.error("❌ Failed to seed admin:", error);
     throw error;
   }
 };
@@ -78,11 +72,9 @@ const seedAdmin = async () => {
 // Execute seeding
 seedAdmin()
   .catch((error) => {
-    console.error("💥 Fatal error during seeding:", error);
     process.exit(1);
   })
   .finally(async () => {
     // Ensure database connection is closed after execution
     await prisma.$disconnect();
-    console.log("🔌 Database disconnected.");
   });

@@ -191,7 +191,7 @@ export const createMedicineForSeller = async (sellerId: string, payload: CreateM
       WHERE id = '${medicine.id}'
     `);
   } catch (err) {
-    console.error(`Failed to generate vector for ${medicine.name}:`, err);
+    // Silently continue
   }
 
   return { ...medicine, price: Number(medicine.price) };
@@ -298,7 +298,7 @@ export const updateMedicineBySeller = async (sellerId: string, medicineId: strin
         WHERE id = '${updated.id}'
       `);
     } catch (err) {
-      console.error(`Failed to update vector for ${updated.name}:`, err);
+      // Silently continue
     }
   }
 

@@ -13,12 +13,9 @@ const app: Application = express();
 app.use(cookieParser());
 app.use(express.json());
 
-console.log(">>> BACKEND SERVER INITIALIZING <<<");
-
 app.set("trust proxy", 1);
 
 app.use((req, res, next) => {
-  console.log(`[Incoming Request] ${req.method} ${req.url}`);
   next();
 });
 
@@ -49,7 +46,6 @@ app.use("/api/auth", (req, res, next) => {
   }
   
   // Otherwise, let Better Auth handle it (e.g., /callback/google)
-  console.log(`[Auth Debug] Path: ${req.path}, Origin: ${req.headers.origin}, Host: ${req.headers.host}`);
   return toNodeHandler(auth)(req, res);
 });
 

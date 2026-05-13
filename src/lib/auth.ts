@@ -31,9 +31,8 @@ export const auth = betterAuth({
     }
   },
   trustedOrigins: [
-    "http://localhost:3000",
-    "http://localhost:5000",
-    "https://medistore-frontend-eight.vercel.app"
+    process.env.APP_URL!,
+    process.env.BETTER_AUTH_URL!,
   ],
   advanced: {
     disableCSRFCheck: true,
@@ -69,7 +68,6 @@ export const auth = betterAuth({
     emailOTP({
       overrideDefaultEmailVerification: true,
       async sendVerificationOTP({ email, otp, type }: { email: string, otp: string, type: "email-verification" | "forget-password" | "sign-in" | "change-email" }) {
-        console.log(`[Auth] Attempting to send ${type} OTP to ${email}`);
         const user = await prisma.user.findUnique({
           where: {
             email,
@@ -78,13 +76,11 @@ export const auth = betterAuth({
 
         // Skip sending verification OTP for ADMIN role for auth-related types
         if (user && user.role === USER_ROLE.ADMIN && (type === "email-verification" || type === "sign-in")) {
-          console.log(`[Auth] User with email ${email} is an admin. Skipping sending verification OTP (${type}).`);
           return;
         }
 
         if (type === "email-verification") {
           if (!user || !user.emailVerified) {
-            console.log(`[Auth] Sending email-verification OTP to ${email}`);
             await sendEmail({
               to: email,
               subject: "Verify your email",
@@ -94,11 +90,8 @@ export const auth = betterAuth({
                 otp,
               },
             });
-          } else {
-             console.log(`[Auth] User ${email} already verified, skipping OTP.`);
           }
         } else if (type === "forget-password") {
-          console.log(`[Auth] Sending forget-password OTP to ${email}`);
           await sendEmail({
             to: email,
             subject: "Password Reset OTP",

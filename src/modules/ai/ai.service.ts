@@ -139,7 +139,6 @@ export const processAIChat = async (message: string, history: any[] = []) => {
     } catch (firstError: any) {
       // If it's a 503 (High Demand), wait 1.5 seconds and try one more time
       if (firstError.status === 503 || firstError.message?.includes("503") || firstError.message?.includes("high demand")) {
-        console.log("AI High Demand - Retrying in 1.5s...");
         await new Promise(resolve => setTimeout(resolve, 1500));
         response = await chat.sendMessage({ message: message });
       } else {
@@ -170,7 +169,6 @@ export const processAIChat = async (message: string, history: any[] = []) => {
         response = await chat.sendMessage({ message: toolResults });
       } catch (toolError: any) {
         if (toolError.status === 503 || toolError.message?.includes("503")) {
-          console.log("AI High Demand during Tool call - Retrying in 1.5s...");
           await new Promise(resolve => setTimeout(resolve, 1500));
           response = await chat.sendMessage({ message: toolResults });
         } else {
@@ -182,19 +180,16 @@ export const processAIChat = async (message: string, history: any[] = []) => {
 
     return response.text;
   } catch (error: any) {
-    console.error("AI Service Error - FULL DETAILS:", error);
-
     const errorMessage = error.message?.toLowerCase() || "";
-    const errorStatus = error.status || error.code || "";
-
+    
     if (errorMessage.includes("503") || errorMessage.includes("high demand") || errorMessage.includes("unavailable")) {
       return "I'm currently experiencing high demand. The pharmacy is a bit crowded! Please try again in a moment.";
     }
-
+    
     if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
       return "I've hit my request limit for the moment. Please wait a few seconds before your next question.";
     }
-
+    
     return "I'm having a little trouble connecting to my knowledge base right now. Please try again shortly!";
   }
 };
@@ -220,7 +215,6 @@ export const semanticSearchMedicines = async (query: string, limit: number = 5) 
 
     return medicines;
   } catch (error: any) {
-    console.error("Semantic Search Error:", error);
     throw new Error(error.message || "Failed to perform semantic search.");
   }
 };

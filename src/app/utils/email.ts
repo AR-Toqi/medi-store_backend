@@ -47,11 +47,9 @@ export const sendEmail = async ({
             else if (fs.existsSync(relativeTemplatePath)) templatePath = relativeTemplatePath;
 
             if (!templatePath) {
-                console.error(`[Email] ❌ Template not found: ${templateName}`, { builtPath, sourcePath });
                 throw new AppError(status.INTERNAL_SERVER_ERROR, `Email template ${templateName} not found`);
             }
 
-            console.log(`[Email] Using template: ${templatePath}`);
             finalHtml = await ejs.renderFile(templatePath, templateData);
         }
 
@@ -60,9 +58,7 @@ export const sendEmail = async ({
         }
 
         // ── Send via Brevo ────────────────────────────────────────────
-        console.log(`[Email] Sending to ${to} via Brevo...`);
-
-        const response = await brevo.transactionalEmails.sendTransacEmail({
+        await brevo.transactionalEmails.sendTransacEmail({
             subject,
             htmlContent: finalHtml,
             sender: {
@@ -80,14 +76,7 @@ export const sendEmail = async ({
             }),
         });
 
-        console.log(`[Email] ✅ Email sent to ${to} — messageId=${(response as any)?.messageId}`);
-
     } catch (error: any) {
-        console.error("[Email] ❌ sendEmail failed:", {
-            message: error?.message,
-            brevoDetails: error?.body || error, // Captures actual Brevo API errors
-            templateName,
-        });
         throw new AppError(status.INTERNAL_SERVER_ERROR, "Failed to send email");
     }
 };
