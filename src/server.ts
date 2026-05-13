@@ -3,6 +3,11 @@ import app from "./app";
 import { prisma } from "./lib/prisma";
 import { config } from "./config";
 
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection:', reason);
+    process.exit(1);
+});
+
 const PORT = config.port || 5000;
 
 async function bootstrap() {
