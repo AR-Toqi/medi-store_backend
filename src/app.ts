@@ -10,14 +10,7 @@ import { auth } from "./lib/auth";
 
 const app: Application = express();
 
-app.use(cookieParser());
-app.use(express.json());
-
 app.set("trust proxy", 1);
-
-app.use((req, res, next) => {
-  next();
-});
 
 app.use(
   cors({

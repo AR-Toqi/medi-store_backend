@@ -1,8 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 
+if (!config.google_api_key) {
+  console.warn("WARNING: GOOGLE_API_KEY is missing. AI features will not work.");
+}
+
 const ai = new GoogleGenAI({
-  apiKey: config.google_api_key as string,
+  apiKey: (config.google_api_key as string) || "missing-key",
 });
 
 export type EmbeddingTaskType =
