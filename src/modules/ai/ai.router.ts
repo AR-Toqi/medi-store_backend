@@ -10,5 +10,6 @@ const router = Router();
  */
 router.post("/chat", AIController.chatWithAI);
 router.get("/search", AIController.semanticSearch);
+router.get("/sync", AIController.syncVectors);
 
 export const AIRoutes = router;

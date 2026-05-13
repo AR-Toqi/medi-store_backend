@@ -11,18 +11,18 @@ const ai = new GoogleGenAI({
 /**
  * Tool definitions for the AI Agent
  */
-const tools: any[] = [
+const tools: any = [
   {
     functionDeclarations: [
       {
         name: "get_medicines",
         description: "Fetch a list of available medicines, optionally filtered by category or search term.",
         parameters: {
-          type: "OBJECT",
+          type: "object",
           properties: {
-            searchTerm: { type: "STRING", description: "Search for medicine name or manufacturer" },
-            category: { type: "STRING", description: "Filter by category name" },
-            limit: { type: "NUMBER", description: "Number of items to return (default 5)" }
+            searchTerm: { type: "string", description: "Search for medicine name or manufacturer" },
+            category: { type: "string", description: "Filter by category name" },
+            limit: { type: "number", description: "Number of items to return (default 5)" }
           },
         },
       },
@@ -30,10 +30,10 @@ const tools: any[] = [
         name: "get_medicine_details",
         description: "Fetch detailed information about a specific medicine including price, stock, and description. Provide either medicineId or slug.",
         parameters: {
-          type: "OBJECT",
+          type: "object",
           properties: {
-            medicineId: { type: "STRING", description: "The ID of the medicine" },
-            slug: { type: "STRING", description: "The URL slug of the medicine" }
+            medicineId: { type: "string", description: "The ID of the medicine" },
+            slug: { type: "string", description: "The URL slug of the medicine" }
           },
         },
       },
@@ -41,10 +41,10 @@ const tools: any[] = [
         name: "search_medicines_by_description",
         description: "Search for medicines based on symptoms, effects, or natural language descriptions (e.g., 'medicine for fever').",
         parameters: {
-          type: "OBJECT",
+          type: "object",
           properties: {
-            query: { type: "STRING", description: "The description or symptoms to search for" },
-            limit: { type: "NUMBER", description: "Number of matches to return (default 5)" }
+            query: { type: "string", description: "The description or symptoms to search for" },
+            limit: { type: "number", description: "Number of matches to return (default 5)" }
           },
           required: ["query"],
         },
@@ -53,7 +53,7 @@ const tools: any[] = [
         name: "get_categories",
         description: "List all available medicine categories.",
         parameters: {
-          type: "OBJECT",
+          type: "object",
           properties: {},
         },
       },
@@ -112,7 +112,7 @@ const toolHandlers: Record<string, Function> = {
  */
 export const processAIChat = async (message: string, history: any[] = []) => {
   try {
-    const systemInstruction = "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'";
+    const systemInstruction = "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'";
 
     // Gemini requires history to start with 'user' role
     const mappedHistory = history.map(h => ({
@@ -133,7 +133,19 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       }
     });
 
-    let response = await chat.sendMessage({ message: message });
+    let response;
+    try {
+      response = await chat.sendMessage({ message: message });
+    } catch (firstError: any) {
+      // If it's a 503 (High Demand), wait 1.5 seconds and try one more time
+      if (firstError.status === 503 || firstError.message?.includes("503") || firstError.message?.includes("high demand")) {
+        console.log("AI High Demand - Retrying in 1.5s...");
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        response = await chat.sendMessage({ message: message });
+      } else {
+        throw firstError;
+      }
+    }
     
     // Automatic tool handling loop in the unified SDK
     let iteration = 0;
@@ -141,7 +153,7 @@ export const processAIChat = async (message: string, history: any[] = []) => {
 
     while (response.functionCalls && response.functionCalls.length > 0 && iteration < maxIterations) {
       const toolResults = await Promise.all(
-        response.functionCalls.map(async (call) => {
+        response.functionCalls.map(async (call: any) => {
           const handler = call.name ? toolHandlers[call.name] : null;
           const output = handler ? await handler(call.args) : `Tool ${call.name} not found`;
           return {
@@ -154,17 +166,36 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       );
 
       // Sending tool results back
-      response = await chat.sendMessage({ message: toolResults });
+      try {
+        response = await chat.sendMessage({ message: toolResults });
+      } catch (toolError: any) {
+        if (toolError.status === 503 || toolError.message?.includes("503")) {
+          console.log("AI High Demand during Tool call - Retrying in 1.5s...");
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          response = await chat.sendMessage({ message: toolResults });
+        } else {
+          throw toolError;
+        }
+      }
       iteration++;
     }
 
     return response.text;
   } catch (error: any) {
-    console.error("AI Service Error:", error);
-    if (error.message?.includes("429") || error.message?.includes("quota")) {
-      return "I'm currently over my quota. Please wait a few seconds and try again.";
+    console.error("AI Service Error - FULL DETAILS:", error);
+
+    const errorMessage = error.message?.toLowerCase() || "";
+    const errorStatus = error.status || error.code || "";
+
+    if (errorMessage.includes("503") || errorMessage.includes("high demand") || errorMessage.includes("unavailable")) {
+      return "I'm currently experiencing high demand. The pharmacy is a bit crowded! Please try again in a moment.";
     }
-    throw new Error(error.message || "AI Assistant is temporarily unavailable.");
+
+    if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
+      return "I've hit my request limit for the moment. Please wait a few seconds before your next question.";
+    }
+
+    return "I'm having a little trouble connecting to my knowledge base right now. Please try again shortly!";
   }
 };
 
@@ -177,10 +208,12 @@ export const semanticSearchMedicines = async (query: string, limit: number = 5) 
 
     const medicines = await prisma.$queryRawUnsafe(`
       SELECT 
-        id, name, price, stock, manufacturer, description, "imageUrl", slug,
-        1 - (vector <=> '[${queryVector.join(",")}]'::vector) as similarity
-      FROM "Medicine"
-      WHERE vector IS NOT NULL
+        m.id, m.name, m.price, m.stock, m.manufacturer, m.description, m."imageUrl", m.slug,
+        c.name as "categoryName",
+        1 - (m.vector <=> '[${queryVector.join(",")}]'::vector) as similarity
+      FROM "Medicine" m
+      LEFT JOIN "Category" c ON m."categoryId" = c.id
+      WHERE m.vector IS NOT NULL
       ORDER BY similarity DESC
       LIMIT ${limit};
     `);

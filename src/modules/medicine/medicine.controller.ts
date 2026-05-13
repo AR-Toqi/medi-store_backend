@@ -16,6 +16,7 @@ const getAllMedicines = catchAsync(async (req: Request, res: Response) => {
   const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice as string) : undefined;
   const manufacturer = req.query.manufacturer as string;
   const isFeatured = req.query.isFeatured as string;
+  const sort = req.query.sort as string;
 
   const result = await medicineService.getAllMedicines({
     page,
@@ -26,6 +27,7 @@ const getAllMedicines = catchAsync(async (req: Request, res: Response) => {
     maxPrice,
     manufacturer,
     isFeatured,
+    sort,
   });
 
   sendResponse(res, {

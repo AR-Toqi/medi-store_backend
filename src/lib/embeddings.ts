@@ -5,13 +5,13 @@ const ai = new GoogleGenAI({
   apiKey: config.google_api_key as string,
 });
 
-export type EmbeddingTaskType = 
-  | "search_query" 
-  | "search_document" 
-  | "classification" 
-  | "clustering" 
-  | "similarity" 
-  | "fact_checking" 
+export type EmbeddingTaskType =
+  | "search_query"
+  | "search_document"
+  | "classification"
+  | "clustering"
+  | "similarity"
+  | "fact_checking"
   | "code_retrieval";
 
 interface EmbeddingOptions {
@@ -24,7 +24,7 @@ interface EmbeddingOptions {
  */
 const formatEmbeddingPrompt = (text: string, options?: EmbeddingOptions): string => {
   const { taskType, title } = options || {};
-  
+
   switch (taskType) {
     case "search_query":
       return `task: search result | query: ${text}`;
@@ -51,12 +51,12 @@ const formatEmbeddingPrompt = (text: string, options?: EmbeddingOptions): string
  * Automatically applies task-specific formatting if taskType is provided.
  */
 export const generateEmbedding = async (
-  text: string, 
+  text: string,
   options?: EmbeddingOptions
 ): Promise<number[]> => {
   try {
     const formattedText = formatEmbeddingPrompt(text, options);
-    
+
     const response = await ai.models.embedContent({
       model: "gemini-embedding-2",
       contents: formattedText,
@@ -66,7 +66,7 @@ export const generateEmbedding = async (
     if (firstEmbedding?.values) {
       return firstEmbedding.values as number[];
     }
-    
+
     throw new Error("No embeddings returned from model");
   } catch (error) {
     console.error("Error generating embedding:", error);

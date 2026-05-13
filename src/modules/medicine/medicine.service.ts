@@ -3,6 +3,7 @@ import { slugify } from "../../utils/slugify";
 import type { CreateMedicineInput, UpdateMedicineInput, GetMedicinesParams, MedicineUpdateData } from '../../types/medicine.d';
 import httpStatus from "http-status";
 import AppError from "../../app/errors/AppError";
+import { generateEmbedding } from "../../lib/embeddings";
 import { deleteFromCloudinary, extractPublicId } from "../../utils/cloudinary";
  
 const DEFAULT_MEDICINE_IMAGE = "https://placehold.co/600x400/00bfa5/ffffff?text=Medicine+Image";
@@ -62,13 +63,32 @@ export const getAllMedicines = async (params: GetMedicinesParams) => {
   // Remove empty AND if no filters were applied
   if (where.AND.length === 0) delete where.AND;
 
+  // Build prisma order by clause
+  let orderBy: any = { createdAt: "desc" };
+  if (params.sort) {
+    switch (params.sort) {
+      case "price-asc":
+        orderBy = { price: "asc" };
+        break;
+      case "price-desc":
+        orderBy = { price: "desc" };
+        break;
+      case "name-asc":
+        orderBy = { name: "asc" };
+        break;
+      case "newest":
+        orderBy = { createdAt: "desc" };
+        break;
+    }
+  }
+
   const [total, medicines] = await Promise.all([
     prisma.medicine.count({ where }),
     prisma.medicine.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       include: { 
         category: true,
         seller: {
@@ -154,6 +174,25 @@ export const createMedicineForSeller = async (sellerId: string, payload: CreateM
     },
     include: { category: true },
   });
+
+  // Generate vector asynchronously so it doesn't slow down the response
+  // but we do it before returning so the user knows it's happening
+  try {
+    const prompt = `title: ${medicine.name} | description: ${medicine.description || ""} | manufacturer: ${medicine.manufacturer}`;
+    const vector = await generateEmbedding(prompt, { 
+      taskType: "search_document",
+      title: medicine.name 
+    });
+    
+    const vectorString = `[${vector.join(",")}]`;
+    await prisma.$executeRawUnsafe(`
+      UPDATE "Medicine"
+      SET vector = '${vectorString}'::vector
+      WHERE id = '${medicine.id}'
+    `);
+  } catch (err) {
+    console.error(`Failed to generate vector for ${medicine.name}:`, err);
+  }
 
   return { ...medicine, price: Number(medicine.price) };
 };
@@ -242,6 +281,26 @@ export const updateMedicineBySeller = async (sellerId: string, medicineId: strin
     data: updateData as any,
     include: { category: true },
   });
+
+  // Update vector if relevant fields changed
+  if (payload.name || payload.description !== undefined || payload.manufacturer !== undefined) {
+    try {
+      const prompt = `title: ${updated.name} | description: ${updated.description || ""} | manufacturer: ${updated.manufacturer}`;
+      const vector = await generateEmbedding(prompt, { 
+        taskType: "search_document",
+        title: updated.name 
+      });
+      
+      const vectorString = `[${vector.join(",")}]`;
+      await prisma.$executeRawUnsafe(`
+        UPDATE "Medicine"
+        SET vector = '${vectorString}'::vector
+        WHERE id = '${updated.id}'
+      `);
+    } catch (err) {
+      console.error(`Failed to update vector for ${updated.name}:`, err);
+    }
+  }
 
   return { ...updated, price: Number(updated.price) };
 };

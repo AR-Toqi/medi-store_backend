@@ -10,19 +10,31 @@ import { auth } from "./lib/auth";
 
 const app: Application = express();
 
+app.use(cookieParser());
+app.use(express.json());
+
+console.log(">>> BACKEND SERVER INITIALIZING <<<");
+
 app.set("trust proxy", 1);
+
+app.use((req, res, next) => {
+  console.log(`[Incoming Request] ${req.method} ${req.url}`);
+  next();
+});
 
 app.use(
   cors({
-    origin: [process.env.APP_URL, process.env.BETTER_AUTH_URL] as string[],
+    origin: [process.env.APP_URL, process.env.BETTER_AUTH_URL, "http://localhost:3000"] as string[],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 
+app.use(cookieParser());
+app.use(express.json());
 
-// Better Auth handler MUST be before express.json()
+// Better Auth handler
 app.use("/api/auth", (req, res, next) => {
   // These are our custom routes that need to be handled by our auth.router.ts
   const customRoutes = [
@@ -37,11 +49,9 @@ app.use("/api/auth", (req, res, next) => {
   }
   
   // Otherwise, let Better Auth handle it (e.g., /callback/google)
+  console.log(`[Auth Debug] Path: ${req.path}, Origin: ${req.headers.origin}, Host: ${req.headers.host}`);
   return toNodeHandler(auth)(req, res);
 });
-
-app.use(cookieParser());
-app.use(express.json());
 
 app.get("/", (_, res) => {
   res.json({ status: "OK", message: "MediStore API running" });

@@ -6,7 +6,7 @@ import { sendEmail } from "../app/utils/email";
 import { USER_ROLE } from "../types/role";
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000/api/auth",
   secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -20,7 +20,6 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      // callbackUrl: process.env.GOOGLE_CALLBACK_URL as string, mapProfileToUser: ()=>{
       mapProfileToUser: () => {
         return {
           role: USER_ROLE.CUSTOMER,
@@ -31,7 +30,14 @@ export const auth = betterAuth({
       }
     }
   },
-  trustedOrigins: [process.env.APP_URL!, process.env.BETTER_AUTH_URL!],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "https://medistore-frontend-eight.vercel.app"
+  ],
+  advanced: {
+    disableCSRFCheck: true,
+  },
   user: {
     additionalFields: {
       role: {

@@ -23,7 +23,7 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
 
   const cookieOptions: any = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   };
@@ -60,20 +60,20 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
 const signOut = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
 
   res.clearCookie("better-auth.session_token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   });
@@ -103,7 +103,7 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   if (result.sessionToken) {
     res.cookie("better-auth.session_token", result.sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
       sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
@@ -125,7 +125,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   // Set new accessToken in httpOnly cookie
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
     maxAge: 24 * 60 * 60 * 1000, // 1 day
@@ -188,7 +188,7 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
 
   const cookieOptions: any = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   };

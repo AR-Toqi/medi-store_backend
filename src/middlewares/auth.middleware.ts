@@ -31,6 +31,8 @@ export const requireAuth = async (
       tokenSource = "cookie";
     }
 
+    console.log(`[Auth Middleware] Path: ${req.path}, Source: ${tokenSource}, Token: ${token ? "exists" : "missing"}`);
+
     if (
       !token ||
       token === "undefined" ||
@@ -89,10 +91,13 @@ export const requireAuth = async (
 
     next();
   } catch (error: any) {
-    console.error("Auth Middleware Error:", error);
+    console.error("Auth Middleware Error:", error.message);
+    if (error.name === "TokenExpiredError") {
+      console.log("Token expired at:", error.expiredAt);
+    }
     return res.status(401).json({
       success: false,
-      message: "Unauthorized - Invalid or expired token",
+      message: `Unauthorized - ${error.message || "Invalid or expired token"}`,
     });
   }
 };

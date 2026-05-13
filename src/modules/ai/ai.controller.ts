@@ -3,6 +3,7 @@ import catchAsync from "../../app/errors/catchAsync";
 import sendResponse from "../../app/utils/sendResponse";
 import httpStatus from "http-status";
 import { processAIChat, semanticSearchMedicines } from "./ai.service";
+import { syncMedicineVectors } from "./sync-vectors";
 
 const chatWithAI = catchAsync(async (req: Request, res: Response) => {
   const { message, history } = req.body;
@@ -50,7 +51,21 @@ const semanticSearch = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const syncVectors = catchAsync(async (req: Request, res: Response) => {
+  // This might take a while, so we run it and respond when done
+  // For production, you'd want this to be a background task
+  await syncMedicineVectors();
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Medicine vectors synchronized successfully",
+    data: null,
+  });
+});
+
 export const AIController = {
   chatWithAI,
   semanticSearch,
+  syncVectors,
 };

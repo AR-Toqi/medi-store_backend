@@ -36,6 +36,7 @@ export interface GetMedicinesParams {
   maxPrice?: number | undefined;
   manufacturer?: string | undefined;
   isFeatured?: boolean | string | undefined;
+  sort?: string | undefined;
 }
 
 export interface MedicineParams {
