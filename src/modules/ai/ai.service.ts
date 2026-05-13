@@ -119,9 +119,9 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       role: h.role === 'bot' ? 'model' : h.role,
       parts: h.parts
     }));
-    
-    const finalHistory = mappedHistory[0]?.role === 'model' 
-      ? mappedHistory.slice(1) 
+
+    const finalHistory = mappedHistory[0]?.role === 'model'
+      ? mappedHistory.slice(1)
       : mappedHistory;
 
     const chat = ai.chats.create({
@@ -145,7 +145,7 @@ export const processAIChat = async (message: string, history: any[] = []) => {
         throw firstError;
       }
     }
-    
+
     // Automatic tool handling loop in the unified SDK
     let iteration = 0;
     const maxIterations = 5;
@@ -181,15 +181,15 @@ export const processAIChat = async (message: string, history: any[] = []) => {
     return response.text;
   } catch (error: any) {
     const errorMessage = error.message?.toLowerCase() || "";
-    
+
     if (errorMessage.includes("503") || errorMessage.includes("high demand") || errorMessage.includes("unavailable")) {
       return "I'm currently experiencing high demand. The pharmacy is a bit crowded! Please try again in a moment.";
     }
-    
+
     if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
       return "I've hit my request limit for the moment. Please wait a few seconds before your next question.";
     }
-    
+
     return "I'm having a little trouble connecting to my knowledge base right now. Please try again shortly!";
   }
 };

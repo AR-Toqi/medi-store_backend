@@ -10,6 +10,9 @@ import { auth } from "./lib/auth";
 
 const app: Application = express();
 
+app.use(cookieParser());
+app.use(express.json());
+
 app.set("trust proxy", 1);
 
 app.use(
@@ -21,23 +24,22 @@ app.use(
   })
 );
 
-app.use(cookieParser());
-app.use(express.json());
+
 
 // Better Auth handler
 app.use("/api/auth", (req, res, next) => {
   // These are our custom routes that need to be handled by our auth.router.ts
   const customRoutes = [
-    "/register", "/login", "/verify-email", "/logout", 
-    "/refresh-token", "/forgot-password", "/reset-password", 
+    "/register", "/login", "/verify-email", "/logout",
+    "/refresh-token", "/forgot-password", "/reset-password",
     "/login/google", "/google/success", "/oauth/error"
   ];
-  
+
   // If the request matches a custom route, pass it to the next middleware (express.json and our router)
   if (customRoutes.includes(req.path)) {
     return next();
   }
-  
+
   // Otherwise, let Better Auth handle it (e.g., /callback/google)
   return toNodeHandler(auth)(req, res);
 });
