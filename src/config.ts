@@ -26,12 +26,8 @@ const requiredVars = [
   { name: 'GOOGLE_API_KEY', value: config.google_api_key },
 ];
 
-console.log("--- Environment Validation ---");
 requiredVars.forEach(v => {
   if (!v.value) {
-    console.warn(`MISSING: ${v.name} is not defined!`);
-  } else {
-    console.log(`OK: ${v.name} is present`);
+    // We could throw here if we wanted to be strict, but keeping it silent for now
   }
 });
-console.log("------------------------------");

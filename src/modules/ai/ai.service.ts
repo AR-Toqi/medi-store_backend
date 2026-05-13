@@ -1,11 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { config } from "../../config";
 import { prisma } from "../../lib/prisma";
 import { generateEmbedding } from "../../lib/embeddings";
 
-// Using the unified SDK which is already working for embeddings
-const ai = new GoogleGenAI({
-  apiKey: config.google_api_key as string,
+const genAI = new GoogleGenerativeAI(config.google_api_key as string);
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+  systemInstruction: "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'",
 });
 
 /**
@@ -112,65 +113,53 @@ const toolHandlers: Record<string, Function> = {
  */
 export const processAIChat = async (message: string, history: any[] = []) => {
   try {
-    const systemInstruction = "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'";
-
-    // Gemini requires history to start with 'user' role
-    const mappedHistory = history.map(h => ({
-      role: h.role === 'bot' ? 'model' : h.role,
-      parts: h.parts
-    }));
-
-    const finalHistory = mappedHistory[0]?.role === 'model'
-      ? mappedHistory.slice(1)
-      : mappedHistory;
-
-    const chat = ai.chats.create({
-      model: "models/gemini-3.1-flash-lite-preview",
-      history: finalHistory,
-      config: {
-        systemInstruction: systemInstruction,
-        tools: tools,
-      }
+    const chat = model.startChat({
+      history: history.map(h => ({
+        role: h.role === 'bot' ? 'model' : h.role,
+        parts: [{ text: h.parts }]
+      })),
+      tools: tools,
     });
 
-    let response;
+    let result;
     try {
-      response = await chat.sendMessage({ message: message });
+      result = await chat.sendMessage(message);
     } catch (firstError: any) {
-      // If it's a 503 (High Demand), wait 1.5 seconds and try one more time
       if (firstError.status === 503 || firstError.message?.includes("503") || firstError.message?.includes("high demand")) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        response = await chat.sendMessage({ message: message });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        result = await chat.sendMessage(message);
       } else {
         throw firstError;
       }
     }
-
-    // Automatic tool handling loop in the unified SDK
+    
+    let response = result.response;
     let iteration = 0;
     const maxIterations = 5;
 
-    while (response.functionCalls && response.functionCalls.length > 0 && iteration < maxIterations) {
+    while (response.functionCalls()?.length && iteration < maxIterations) {
+      const functionCalls = response.functionCalls();
       const toolResults = await Promise.all(
-        response.functionCalls.map(async (call: any) => {
-          const handler = call.name ? toolHandlers[call.name] : null;
-          const output = handler ? await handler(call.args) : `Tool ${call.name} not found`;
+        functionCalls!.map(async (call) => {
+          const handler = toolHandlers[call.name];
+          const output = handler ? await handler(call.args) : { error: `Tool ${call.name} not found` };
           return {
             functionResponse: {
-              name: call.name || "unknown",
-              response: { output: JSON.stringify(output) }
+              name: call.name,
+              response: { content: output }
             }
           };
         })
       );
 
-      // Sending tool results back
       try {
-        response = await chat.sendMessage({ message: toolResults });
+        result = await chat.sendMessage(toolResults);
+        response = result.response;
       } catch (toolError: any) {
         if (toolError.status === 503 || toolError.message?.includes("503")) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          response = await chat.sendMessage({ message: toolResults });
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          result = await chat.sendMessage(toolResults);
+          response = result.response;
         } else {
           throw toolError;
         }
@@ -178,18 +167,18 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       iteration++;
     }
 
-    return response.text;
+    return response.text();
   } catch (error: any) {
     const errorMessage = error.message?.toLowerCase() || "";
-
+    
     if (errorMessage.includes("503") || errorMessage.includes("high demand") || errorMessage.includes("unavailable")) {
       return "I'm currently experiencing high demand. The pharmacy is a bit crowded! Please try again in a moment.";
     }
-
+    
     if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
       return "I've hit my request limit for the moment. Please wait a few seconds before your next question.";
     }
-
+    
     return "I'm having a little trouble connecting to my knowledge base right now. Please try again shortly!";
   }
 };

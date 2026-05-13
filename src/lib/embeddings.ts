@@ -1,13 +1,8 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import { config } from "../config";
 
-if (!config.google_api_key) {
-  console.warn("WARNING: GOOGLE_API_KEY is missing. AI features will not work.");
-}
-
-const ai = new GoogleGenAI({
-  apiKey: (config.google_api_key as string) || "missing-key",
-});
+const genAI = new GoogleGenerativeAI(config.google_api_key as string);
+const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
 export type EmbeddingTaskType =
   | "search_query"
@@ -23,56 +18,35 @@ interface EmbeddingOptions {
   title?: string;
 }
 
-/**
- * Formats the text with task instructions as recommended for gemini-embedding-2.
- */
-const formatEmbeddingPrompt = (text: string, options?: EmbeddingOptions): string => {
-  const { taskType, title } = options || {};
-
+const mapTaskType = (taskType?: EmbeddingTaskType): TaskType => {
   switch (taskType) {
-    case "search_query":
-      return `task: search result | query: ${text}`;
-    case "fact_checking":
-      return `task: fact checking | query: ${text}`;
-    case "code_retrieval":
-      return `task: code retrieval | query: ${text}`;
-    case "classification":
-      return `task: classification | query: ${text}`;
-    case "clustering":
-      return `task: clustering | query: ${text}`;
-    case "similarity":
-      return `task: sentence similarity | query: ${text}`;
-    case "search_document":
-      return `title: ${title || "none"} | text: ${text}`;
-    default:
-      // If no task type is provided, we return the raw text
-      return text;
+    case "search_query": return TaskType.RETRIEVAL_QUERY;
+    case "search_document": return TaskType.RETRIEVAL_DOCUMENT;
+    case "classification": return TaskType.CLASSIFICATION;
+    case "clustering": return TaskType.CLUSTERING;
+    case "similarity": return TaskType.SEMANTIC_SIMILARITY;
+    case "fact_checking": return TaskType.FACT_CHECKING;
+    default: return TaskType.RETRIEVAL_QUERY;
   }
 };
 
-/**
- * Converts a string of text into a vector embedding using the gemini-embedding-2 model.
- * Automatically applies task-specific formatting if taskType is provided.
- */
 export const generateEmbedding = async (
   text: string,
   options?: EmbeddingOptions
 ): Promise<number[]> => {
   try {
-    const formattedText = formatEmbeddingPrompt(text, options);
-
-    const response = await ai.models.embedContent({
-      model: "gemini-embedding-2",
-      contents: formattedText,
+    const result = await model.embedContent({
+      content: { parts: [{ text }] },
+      taskType: mapTaskType(options?.taskType),
+      title: options?.title,
     });
 
-    const firstEmbedding = response.embeddings?.[0];
-    if (firstEmbedding?.values) {
-      return firstEmbedding.values as number[];
+    if (result.embedding?.values) {
+      return result.embedding.values;
     }
 
     throw new Error("No embeddings returned from model");
-  } catch (error) {
-    throw new Error("Failed to generate embedding");
+  } catch (error: any) {
+    throw new Error(error.message || "Failed to generate embedding");
   }
 };
