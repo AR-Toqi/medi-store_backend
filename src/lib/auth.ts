@@ -5,6 +5,8 @@ import { prisma } from "./prisma";
 import { sendEmail } from "../app/utils/email";
 import { USER_ROLE } from "../types/role";
 
+console.log('Starting auth initialization...');
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000/api/auth",
   secret: process.env.BETTER_AUTH_SECRET,
@@ -109,3 +111,6 @@ export const auth = betterAuth({
     }),
   ],
 });
+
+
+console.log('Auth initialized successfully');

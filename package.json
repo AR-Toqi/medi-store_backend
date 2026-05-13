@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:push": "npx prisma db push",
     "seed:admin": "npx tsx src/lib/seedAdmin.ts",
-    "build": "npx prisma generate && tsup src/server.ts --format cjs --clean --minify",
+    "build": "npm install && npx prisma generate && tsup src/server.ts --format cjs --clean",
     "start": "node dist/server.js"
   },
   "keywords": [],

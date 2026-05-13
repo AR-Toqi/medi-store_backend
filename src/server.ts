@@ -35,6 +35,7 @@ async function bootstrap() {
         process.on("unhandledRejection", exitHandler);
 
     } catch (error) {
+        console.error('Bootstrap failed:', error);
         process.exit(1);
     }
 }
