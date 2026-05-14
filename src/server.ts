@@ -21,7 +21,8 @@ async function bootstrap() {
         });
 
         // Handle process signals for graceful shutdown
-        const exitHandler = () => {
+        const exitHandler = (error: any) => {
+            console.error('Unhandled exception or rejection:', error);
             if (server) {
                 server.close(() => {
                     process.exit(1);

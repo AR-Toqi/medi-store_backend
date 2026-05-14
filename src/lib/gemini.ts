@@ -1,16 +1,25 @@
 import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 
-const ai = new GoogleGenAI({
-  apiKey: config.google_api_key as string,
-});
+let ai: GoogleGenAI | null = null;
+const getAI = () => {
+  if (!ai) {
+    if (!config.google_api_key) {
+      throw new Error("GOOGLE_API_KEY is missing. Cannot initialize AI.");
+    }
+    ai = new GoogleGenAI({
+      apiKey: config.google_api_key as string,
+    });
+  }
+  return ai;
+};
 
 /**
  * Generates text response using Gemini 3 Flash Preview.
  */
 export const generateChatResponse = async (prompt: string): Promise<string> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
     });

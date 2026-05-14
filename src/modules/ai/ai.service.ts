@@ -3,11 +3,16 @@ import { config } from "../../config";
 import { prisma } from "../../lib/prisma";
 import { generateEmbedding } from "../../lib/embeddings";
 
-const genAI = new GoogleGenerativeAI(config.google_api_key as string);
-const model = genAI.getGenerativeModel({
-  model: "gemini-1.5-flash",
-  systemInstruction: "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'",
-});
+const getModel = () => {
+  if (!config.google_api_key) {
+    throw new Error("GOOGLE_API_KEY is missing. Cannot initialize AI model.");
+  }
+  const genAI = new GoogleGenerativeAI(config.google_api_key as string);
+  return genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'",
+  });
+};
 
 /**
  * Tool definitions for the AI Agent
@@ -113,7 +118,7 @@ const toolHandlers: Record<string, Function> = {
  */
 export const processAIChat = async (message: string, history: any[] = []) => {
   try {
-    const chat = model.startChat({
+    const chat = getModel().startChat({
       history: history.map(h => ({
         role: h.role === 'bot' ? 'model' : h.role,
         parts: [{ text: h.parts }]

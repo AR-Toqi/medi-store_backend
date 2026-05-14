@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
 import { config } from "../config";
 
-const genAI = new GoogleGenerativeAI(config.google_api_key as string);
-const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+const getModel = () => {
+  if (!config.google_api_key) {
+    throw new Error("GOOGLE_API_KEY is missing. Cannot initialize embeddings model.");
+  }
+  const genAI = new GoogleGenerativeAI(config.google_api_key as string);
+  return genAI.getGenerativeModel({ model: "text-embedding-004" });
+};
 
 export type EmbeddingTaskType =
   | "search_query"
@@ -36,7 +41,7 @@ export const generateEmbedding = async (
   options?: EmbeddingOptions
 ): Promise<number[]> => {
   try {
-    const result = await model.embedContent({
+    const result = await getModel().embedContent({
       content: { role: "user", parts: [{ text }] },
       taskType: mapTaskType(options?.taskType),
       title: options?.title,
