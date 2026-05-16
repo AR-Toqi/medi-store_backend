@@ -11,9 +11,6 @@ export default defineConfig({
     shims: true,
     external: [
         'pg-native',
-        '@prisma/client',
-        '@prisma/client-runtime-utils',
-        './generated/prisma'
     ],
     banner: {
         js: `
