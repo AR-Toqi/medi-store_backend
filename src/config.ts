@@ -8,6 +8,8 @@ export const config = {
   database_url: process.env.DATABASE_URL,
   better_auth_secret: process.env.BETTER_AUTH_SECRET,
   google_api_key: process.env.GOOGLE_API_KEY,
+  better_auth_url: process.env.BETTER_AUTH_URL,
+  app_url: process.env.APP_URL,
 };
 
 // Validation for critical variables
@@ -15,6 +17,8 @@ const requiredVars = [
   { name: 'DATABASE_URL', value: config.database_url },
   { name: 'BETTER_AUTH_SECRET', value: config.better_auth_secret },
   { name: 'GOOGLE_API_KEY', value: config.google_api_key },
+  { name: 'BETTER_AUTH_URL', value: config.better_auth_url },
+  { name: 'APP_URL', value: config.app_url },
 ];
 
 requiredVars.forEach(v => {

@@ -50,16 +50,20 @@ import { prisma } from './lib/prisma';
 
 async function main() {
     try {
+        console.log('Starting Medistore Backend...');
+        
         // Check database connection
+        console.log('Attempting to connect to database...');
         await prisma.$connect();
         console.log('Database connected successfully');
 
         app.listen(config.port, () => {
-            console.log(`Server is running on http://localhost:${config.port}`);
+            console.log(`Server is running on port: ${config.port}`);
+            console.log(`Ready to handle requests.`);
         });
 
     } catch (error) {
-        console.error('Failed to start server:', error);
+        console.error('FATAL ERROR DURING BOOTSTRAP:', error);
         process.exit(1);
     }
 }
