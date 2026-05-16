@@ -48,6 +48,10 @@ app.get("/", (_, res) => {
   res.json({ status: "OK", message: "MediStore API running" });
 });
 
+app.get("/api/health", (_, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
+});
+
 
 app.use("/api", indexRoute);
 
