@@ -4,7 +4,7 @@ import path from "path";
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 export const config = {
-  port: process.env.PORT || 5000,
+  port: process.env.PORT || 10000,
   database_url: process.env.DATABASE_URL,
   better_auth_secret: process.env.BETTER_AUTH_SECRET,
   google_api_key: process.env.GOOGLE_API_KEY,
