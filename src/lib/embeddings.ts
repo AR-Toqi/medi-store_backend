@@ -1,12 +1,14 @@
-import { GoogleGenerativeAI, TaskType } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 
-const getModel = () => {
+const getClient = () => {
   if (!config.google_api_key) {
     throw new Error("GOOGLE_API_KEY is missing. Cannot initialize embeddings model.");
   }
-  const genAI = new GoogleGenerativeAI(config.google_api_key as string);
-  return genAI.getGenerativeModel({ model: "text-embedding-004" });
+  return new GoogleGenAI({ 
+    apiKey: config.google_api_key as string,
+    apiVersion: 'v1'
+  });
 };
 
 export type EmbeddingTaskType =
@@ -23,32 +25,35 @@ interface EmbeddingOptions {
   title?: string;
 }
 
-const mapTaskType = (taskType?: EmbeddingTaskType): TaskType => {
+const mapTaskType = (taskType?: EmbeddingTaskType): string => {
   switch (taskType) {
-    case "search_query": return TaskType.RETRIEVAL_QUERY;
-    case "search_document": return TaskType.RETRIEVAL_DOCUMENT;
-    case "classification": return TaskType.CLASSIFICATION;
-    case "clustering": return TaskType.CLUSTERING;
-    case "similarity": return TaskType.SEMANTIC_SIMILARITY;
-    case "fact_checking": return TaskType.RETRIEVAL_QUERY; // Fallback to RETRIEVAL_QUERY
-    default: return TaskType.RETRIEVAL_QUERY;
+    case "search_query": return "RETRIEVAL_QUERY";
+    case "search_document": return "RETRIEVAL_DOCUMENT";
+    case "classification": return "CLASSIFICATION";
+    case "clustering": return "CLUSTERING";
+    case "similarity": return "SEMANTIC_SIMILARITY";
+    case "fact_checking": return "RETRIEVAL_QUERY";
+    default: return "RETRIEVAL_QUERY";
   }
 };
-
 
 export const generateEmbedding = async (
   text: string,
   options?: EmbeddingOptions
 ): Promise<number[]> => {
   try {
-    const result = await getModel().embedContent({
-      content: { role: "user", parts: [{ text }] },
-      taskType: mapTaskType(options?.taskType),
-      title: options?.title,
-    } as any);
+    const client = getClient();
+    const result = await client.models.embedContent({
+      model: "models/gemini-embedding-2",
+      contents: [text],
+      config: {
+        taskType: mapTaskType(options?.taskType),
+        ...(options?.title ? { title: options.title } : {}),
+      }
+    });
 
-    if (result.embedding?.values) {
-      return result.embedding.values;
+    if (result.embeddings?.[0]?.values) {
+      return result.embeddings[0].values;
     }
 
     throw new Error("No embeddings returned from model");
