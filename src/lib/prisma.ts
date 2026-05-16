@@ -1,11 +1,26 @@
-import "dotenv/config";
-import { Pool } from "pg";
+import { Pool, types } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma"
+import { config } from "../config";
 
-const connectionString = `${process.env.DATABASE_URL}`;
+// Force Decimal types to be strings to avoid pg-driver parsing issues
+types.setTypeParser(1700, (val) => val);
 
-const pool = new Pool({ connectionString });
+const connectionString = config.database_url;
+
+const pool = new Pool({
+    connectionString,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+});
+
+// IMPORTANT: This prevents the "Application exited early" crash!
+// It catches errors on idle clients so they don't bubble up and kill the process.
+pool.on('error', (err) => {
+    console.error('DATABASE POOL ERROR:', err.message);
+});
+
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

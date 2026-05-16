@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus } from "../../generated/prisma";
 
 /**
  * Get seller profile by user ID

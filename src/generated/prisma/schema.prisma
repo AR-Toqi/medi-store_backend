@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider   = "prisma-client-js"
-  output     = "../src/generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -28,26 +28,26 @@ enum OrderStatus {
 }
 
 model User {
-  id      String   @id @default(uuid())
-  name    String
-  email   String   @unique
+  id    String @id @default(uuid())
+  name  String
+  email String @unique
 
-  orders  Order[]  @relation("CustomerOrders")
-  reviews Review[]
+  orders    Order[]    @relation("CustomerOrders")
+  reviews   Review[]
   cartItems CartItem[]
   addresses Address[]
 
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  emailVerified Boolean        @default(false)
-  image         String?
-  sessions      Session[]
-  accounts      Account[]
-  sellerProfile SellerProfile?
-  role          String?        @default("CUSTOMER")
-  isBanned      Boolean?       @default(false)
-  needsPasswordChange Boolean?  @default(false)
-  verificationCode String?
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  emailVerified           Boolean        @default(false)
+  image                   String?
+  sessions                Session[]
+  accounts                Account[]
+  sellerProfile           SellerProfile?
+  role                    String?        @default("CUSTOMER")
+  isBanned                Boolean?       @default(false)
+  needsPasswordChange     Boolean?       @default(false)
+  verificationCode        String?
   verificationCodeExpires DateTime?
 
   @@map("user")
@@ -87,8 +87,8 @@ model Medicine {
   orderItems OrderItem[]
   cartItems  CartItem[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
   vector    Unsupported("vector(3072)")? // gemini-embedding-2 produces 3072 dimensions
 }
 
@@ -215,7 +215,7 @@ model CartItem {
 }
 
 model Address {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   userId      String
   fullName    String
   phone       String
@@ -226,13 +226,12 @@ model Address {
   postalCode  String
   addressLine String
   label       String?
-  isDefault   Boolean  @default(false)
+  isDefault   Boolean @default(false)
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
-
