@@ -51,17 +51,24 @@ import { prisma } from './lib/prisma';
 async function main() {
     try {
         console.log('Starting Medistore Backend...');
-        
-        // Check database connection
-        console.log('Attempting to connect to database...');
-        await prisma.$connect();
-        console.log('Database connected successfully');
-
         const port = Number(config.port);
+
+        // 1. Start the server FIRST (so Render health check passes)
         app.listen(port, "0.0.0.0", () => {
             console.log(`Server is running on port: ${port}`);
             console.log(`Ready to handle requests.`);
         });
+
+        // 2. Connect to database in the background
+        console.log('Attempting to connect to database...');
+        prisma.$connect()
+            .then(() => {
+                console.log('Database connected successfully');
+            })
+            .catch((err) => {
+                console.error('DATABASE CONNECTION FAILED:', err);
+                // We keep the server alive so you can see this error in the Render logs
+            });
 
     } catch (error) {
         console.error('FATAL ERROR DURING BOOTSTRAP:', error);
