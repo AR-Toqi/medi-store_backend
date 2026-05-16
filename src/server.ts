@@ -1,12 +1,13 @@
-// import "dotenv/config";
-// import app from "./app";
-// import { prisma } from "./lib/prisma";
-// import { config } from "./config";
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION - THE SERVER IS CRASHING:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+});
 
-// process.on('unhandledRejection', (reason) => {
-//     console.error('Unhandled Rejection:', reason);
-//     process.exit(1);
-// });
+process.on('unhandledRejection', (reason) => {
+    console.error('UNHANDLED REJECTION:', reason);
+    process.exit(1);
+});
 
 // const PORT = config.port || 5000;
 
