@@ -38,7 +38,26 @@ export const auth = betterAuth({
     "http://localhost:3000",
   ].filter((url): url is string => Boolean(url)),
   advanced: {
-    disableCSRFCheck: true,
+    // disableCSRFCheck: true,
+    useSecureCookies: process.env.NODE_ENV === "production",
+    cookies: {
+      state: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        }
+      },
+      sessionToken: {
+        attributes: {
+          sameSite: "none",
+          secure: true,
+          httpOnly: true,
+          path: "/",
+        }
+      }
+    }
   },
   user: {
     additionalFields: {

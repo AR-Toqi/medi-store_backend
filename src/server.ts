@@ -55,10 +55,14 @@ async function main() {
         const port = Number(config.port);
 
         // 1. Start the server FIRST (so Render health check passes)
-        app.listen(port, "0.0.0.0", () => {
+        const server = app.listen(port, "0.0.0.0", () => {
             console.log(`Server is running on port: ${port}`);
             console.log(`Ready to handle requests.`);
         });
+
+        // Recommended by Render for 502 Bad Gateway issues
+        server.keepAliveTimeout = 120000; // 120 seconds
+        server.headersTimeout = 120000;
 
         // 2. Connect to database in the background
         console.log('Attempting to connect to database...');
