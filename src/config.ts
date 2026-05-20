@@ -14,17 +14,23 @@ export const config = {
   app_url: process.env.APP_URL,
 };
 
-// Validation for critical variables
-const requiredVars = [
-  { name: 'DATABASE_URL', value: config.database_url },
-  { name: 'BETTER_AUTH_SECRET', value: config.better_auth_secret },
-  { name: 'GOOGLE_API_KEY', value: config.google_api_key },
-  { name: 'BETTER_AUTH_URL', value: config.better_auth_url },
-  { name: 'APP_URL', value: config.app_url },
-];
+// Validation for critical variables — called explicitly from server.ts bootstrap
+export function validateConfig() {
+  const requiredVars = [
+    { name: 'DATABASE_URL', value: config.database_url },
+    { name: 'BETTER_AUTH_SECRET', value: config.better_auth_secret },
+    { name: 'BETTER_AUTH_URL', value: config.better_auth_url },
+    { name: 'APP_URL', value: config.app_url },
+  ];
 
-requiredVars.forEach(v => {
-  if (!v.value) {
-    throw new Error(`CRITICAL ERROR: Environment variable ${v.name} is missing. The server cannot start without it.`);
+  const missing = requiredVars.filter(v => !v.value).map(v => v.name);
+
+  if (missing.length > 0) {
+    throw new Error(`CRITICAL ERROR: Missing environment variables: ${missing.join(', ')}. The server cannot start without them.`);
   }
-});
+
+  // Non-critical: warn but don't crash
+  if (!config.google_api_key) {
+    console.warn('WARNING: GOOGLE_API_KEY is missing. AI features will be unavailable.');
+  }
+}

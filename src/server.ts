@@ -45,12 +45,15 @@ process.on('unhandledRejection', (reason) => {
 // bootstrap();
 
 import app from './app';
-import { config } from './config';
+import { config, validateConfig } from './config';
 import { prisma } from './lib/prisma';
 
 
 async function main() {
     try {
+        // Validate environment variables before doing anything else
+        validateConfig();
+
         console.log('Starting Medistore Backend...');
         const port = Number(config.port);
 
