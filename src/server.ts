@@ -1,52 +1,31 @@
-process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT EXCEPTION - THE SERVER IS CRASHING:', err.message);
-    console.error(err.stack);
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (reason) => {
-    console.error('UNHANDLED REJECTION:', reason);
-    process.exit(1);
-});
-
-// const PORT = config.port || 5000;
-
-// async function bootstrap() {
-//     try {
-//         // Database connection
-//         await prisma.$connect();
-
-//         // Start server
-//         const server = app.listen(PORT, () => {
-//             console.log(`Server is running on port ${PORT}`);
-//         });
-
-//         // Handle process signals for graceful shutdown
-//         const exitHandler = (error: any) => {
-//             console.error('Unhandled exception or rejection:', error);
-//             if (server) {
-//                 server.close(() => {
-//                     process.exit(1);
-//                 });
-//             } else {
-//                 process.exit(1);
-//             }
-//         };
-
-//         process.on("uncaughtException", exitHandler);
-//         process.on("unhandledRejection", exitHandler);
-
-//     } catch (error) {
-//         console.error('Bootstrap failed:', error);
-//         process.exit(1);
-//     }
-// }
-
-// bootstrap();
-
 import app from './app';
 import { config, validateConfig } from './config';
 import { prisma } from './lib/prisma';
+
+// --- Process-level error handlers ---
+// IMPORTANT: Do NOT call process.exit() immediately — it kills the process
+// before error messages can flush to Render's log collector.
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err.message);
+    console.error(err.stack);
+    // Give logs 1 second to flush before exiting
+    setTimeout(() => process.exit(1), 1000);
+});
+
+process.on('unhandledRejection', (reason) => {
+    // Log but do NOT exit — an unhandled rejection should not kill a running server.
+    console.error('UNHANDLED REJECTION:', reason);
+});
+
+// --- Graceful shutdown ---
+function gracefulShutdown(signal: string) {
+    console.log(`Received ${signal}. Shutting down gracefully...`);
+    prisma.$disconnect().finally(() => {
+        process.exit(0);
+    });
+}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 
 async function main() {
@@ -80,7 +59,8 @@ async function main() {
 
     } catch (error) {
         console.error('FATAL ERROR DURING BOOTSTRAP:', error);
-        process.exit(1);
+        // Delay exit to allow logs to flush
+        setTimeout(() => process.exit(1), 1000);
     }
 }
 
