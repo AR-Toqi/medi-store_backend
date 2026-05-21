@@ -3,7 +3,7 @@ import status from 'http-status';
 import path from 'path';
 import { BrevoClient } from '@getbrevo/brevo';
 import fs from "fs";
-import AppError from "../errors/AppError";
+import AppError from "../errors/AppError.js";
 
 // Initialize with your API Key
 const brevo = new BrevoClient({

@@ -13,7 +13,7 @@ This backend allows users to:
 
 ## 🚀 Live Project
 **Backend URL:**  
-https://medi-store-backend-u9ux.onrender.com/
+https://medistore-backend-ashy.vercel.app/
 
 **GitHub Repository:**  
 https://github.com/AR-Toqi/medi-store_backend
@@ -159,7 +159,7 @@ CLOUDINARY_API_SECRET=xxx
 ## 📌 Project Status
 ✅ Backend Complete  
 🚀 Production Ready  
-🌐 Deployed on Render
+🌐 Deployed on Vercel
 
 ---
 

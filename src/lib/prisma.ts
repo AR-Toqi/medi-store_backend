@@ -1,7 +1,7 @@
 import { Pool, types } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client"
-import { config } from "../config";
+import { config } from "../config.js";
 
 // Force Decimal types to be strings to avoid pg-driver parsing issues
 types.setTypeParser(1700, (val) => val);

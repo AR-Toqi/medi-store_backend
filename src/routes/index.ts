@@ -1,16 +1,16 @@
 import { Router } from "express";
-import { authRoutes } from "../modules/auth/auth.router";
-import { userRoutes } from "../modules/user/user.router";
-import { categoryRoutes } from "../modules/categories/categories.router";
-import { sellerProfileRoutes } from "../modules/sellerProfile/sellerProfile.router";
-import { medicineRoutes } from "../modules/medicine/medicine.router";
-import { orderRoutes } from "../modules/order/order.router";
-import { sellerRoutes } from "../modules/seller/seller.router";
-import { cartItemRoutes } from "../modules/cartItem/cartItem.router";
-import { reviewRoutes } from "../modules/reviews/reviews.router";
-import { adminRoutes } from "../modules/admin/admin.router";
-import { addressRoutes } from "../modules/address/address.router";
-import { AIRoutes } from "../modules/ai/ai.router";
+import { authRoutes } from "../modules/auth/auth.router.js";
+import { userRoutes } from "../modules/user/user.router.js";
+import { categoryRoutes } from "../modules/categories/categories.router.js";
+import { sellerProfileRoutes } from "../modules/sellerProfile/sellerProfile.router.js";
+import { medicineRoutes } from "../modules/medicine/medicine.router.js";
+import { orderRoutes } from "../modules/order/order.router.js";
+import { sellerRoutes } from "../modules/seller/seller.router.js";
+import { cartItemRoutes } from "../modules/cartItem/cartItem.router.js";
+import { reviewRoutes } from "../modules/reviews/reviews.router.js";
+import { adminRoutes } from "../modules/admin/admin.router.js";
+import { addressRoutes } from "../modules/address/address.router.js";
+import { AIRoutes } from "../modules/ai/ai.router.js";
 
 const router = Router();
 

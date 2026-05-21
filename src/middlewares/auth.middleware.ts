@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Secret } from "jsonwebtoken";
-import { verifyToken } from "../utils/token.utils";
-import { prisma } from "../lib/prisma";
+import { verifyToken } from "../utils/token.utils.js";
+import { prisma } from "../lib/prisma.js";
 
 export interface AuthRequest extends Request {
   user?: {

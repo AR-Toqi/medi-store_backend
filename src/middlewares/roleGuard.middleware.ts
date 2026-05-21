@@ -1,6 +1,6 @@
 import { NextFunction, Response } from 'express';
-import { USER_ROLE } from '../types/role';
-import { AuthRequest } from './auth.middleware';
+import { USER_ROLE } from '../types/role.js';
+import { AuthRequest } from './auth.middleware.js';
 
 
 export const roleGuard = (...roles: USER_ROLE[]) =>(req: AuthRequest, res: Response, next: NextFunction) => {

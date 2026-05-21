@@ -1,11 +1,11 @@
 import express, { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { indexRoute } from "./routes";
-import { notFound } from "./middlewares/notFound.middleware";
-import globalErrorHandler from "./app/errors/globalErrorHandler";
+import { indexRoute } from "./routes/index.js";
+import { notFound } from "./middlewares/notFound.middleware.js";
+import globalErrorHandler from "./app/errors/globalErrorHandler.js";
 import { toNodeHandler } from "better-auth/node";
-import { auth } from "./lib/auth";
+import { auth } from "./lib/auth.js";
 
 
 const app: Application = express();

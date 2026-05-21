@@ -1,9 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { bearer, emailOTP } from "better-auth/plugins";
-import { prisma } from "./prisma";
-import { sendEmail } from "../app/utils/email";
-import { USER_ROLE } from "../types/role";
+import { prisma } from "./prisma.js";
+import { sendEmail } from "../app/utils/email.js";
+import { USER_ROLE } from "../types/role.js";
 
 console.log('Starting auth initialization...');
 
