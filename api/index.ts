@@ -1,5 +1,5 @@
-import { validateConfig } from "../src/config";
-import app from "../src/app";
+import { validateConfig } from "../dist/config";
+import app from "../dist/app";
 
 // Validate configuration on cold start
 validateConfig();
