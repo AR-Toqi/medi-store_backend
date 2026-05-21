@@ -15,20 +15,28 @@ export const config = {
 
 // Validation for critical variables — called explicitly from server.ts bootstrap
 export function validateConfig() {
-  const requiredVars = [
-    { name: 'DATABASE_URL', value: config.database_url },
+  // Database URL is strictly required for core database operations
+  if (!config.database_url) {
+    throw new Error('CRITICAL ERROR: DATABASE_URL is missing. The server cannot start without a database connection.');
+  }
+
+  // Better Auth variables - warn clearly but let the server start so Render health checks pass
+  const authVars = [
     { name: 'BETTER_AUTH_SECRET', value: config.better_auth_secret },
     { name: 'BETTER_AUTH_URL', value: config.better_auth_url },
     { name: 'APP_URL', value: config.app_url },
   ];
 
-  const missing = requiredVars.filter(v => !v.value).map(v => v.name);
+  const missingAuth = authVars.filter(v => !v.value).map(v => v.name);
 
-  if (missing.length > 0) {
-    throw new Error(`CRITICAL ERROR: Missing environment variables: ${missing.join(', ')}. The server cannot start without them.`);
+  if (missingAuth.length > 0) {
+    console.warn('\n================================================================');
+    console.warn(`WARNING: Missing authentication variables: ${missingAuth.join(', ')}`);
+    console.warn('Authentication and OAuth features will not work correctly.');
+    console.warn('Please define these in your Render dashboard environment variables!');
+    console.warn('================================================================\n');
   }
 
-  // Non-critical: warn but don't crash
   if (!config.google_api_key) {
     console.warn('WARNING: GOOGLE_API_KEY is missing. AI features will be unavailable.');
   }

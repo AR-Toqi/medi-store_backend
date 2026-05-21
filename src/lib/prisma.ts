@@ -1,6 +1,6 @@
 import { Pool, types } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../generated/prisma"
+import { PrismaClient } from "@prisma/client"
 import { config } from "../config";
 
 // Force Decimal types to be strings to avoid pg-driver parsing issues

@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma";
-import { OrderStatus, Role } from "../../generated/prisma";
+import { OrderStatus, Role } from "@prisma/client";
 import type { CreateOrderPayload, UpdateOrderStatusPayload, GetOrdersParams } from "../../types/order.d";
 import { sendEmail } from "../../app/utils/email";
 import httpStatus from "http-status";

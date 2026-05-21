@@ -1,4 +1,4 @@
-import type { Role, OrderStatus } from "../generated/prisma";
+import type { Role, OrderStatus } from "@prisma/client";
 
 export interface CreateOrderPayload {
   customerId: string;
