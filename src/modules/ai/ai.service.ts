@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { config } from "../../config";
 import { prisma } from "../../lib/prisma";
 import { generateEmbedding } from "../../lib/embeddings";
@@ -7,7 +7,7 @@ const getClient = () => {
   if (!config.google_api_key) {
     throw new Error("GOOGLE_API_KEY is missing. Cannot initialize AI model.");
   }
-  return new GoogleGenAI({ apiKey: config.google_api_key as string });
+  return new GoogleGenerativeAI(config.google_api_key as string);
 };
 
 const SYSTEM_INSTRUCTION = "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'";
@@ -116,60 +116,68 @@ const toolHandlers: Record<string, Function> = {
  */
 export const processAIChat = async (message: string, history: any[] = []) => {
   try {
+    console.log("AI Chat - Starting process with message:", message);
+    console.log("AI Chat - History length:", history.length);
+
     const client = getClient();
-    const chat = client.chats.create({
-      model: "models/gemini-3-flash-preview",
-      history: history.map(h => ({
-        role: h.role === 'bot' ? 'model' : h.role,
-        parts: [{ text: h.parts }]
-      })),
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        tools: tools,
-      }
+    console.log("AI Chat - Client initialized successfully");
+
+    const model = client.getGenerativeModel({
+      model: "gemini-3-flash-preview",
+      systemInstruction: SYSTEM_INSTRUCTION,
+      tools: tools,
+    });
+
+    // Format history for the API
+    const formattedHistory = history.map(h => ({
+      role: h.role === 'bot' ? 'model' : 'user',
+      parts: [{ text: h.parts }]
+    }));
+
+    const chat = model.startChat({
+      history: formattedHistory,
     });
 
     let result;
     try {
-      result = await chat.sendMessage({ message });
+      result = await chat.sendMessage(message);
     } catch (firstError: any) {
       if (firstError.status === 503 || firstError.message?.includes("503") || firstError.message?.includes("high demand")) {
         await new Promise(resolve => setTimeout(resolve, 2000));
-        result = await chat.sendMessage({ message });
+        result = await chat.sendMessage(message);
       } else {
         throw firstError;
       }
     }
     
-    let response = result;
+    let response = result.response;
     let iteration = 0;
     const maxIterations = 5;
 
-    while (response.functionCalls?.length && iteration < maxIterations) {
-      const functionCalls = response.functionCalls;
+    while (response.functionCalls?.() && iteration < maxIterations) {
+      const functionCalls = response.functionCalls();
       const toolResults = await Promise.all(
         functionCalls!.map(async (call: any) => {
           const handler = toolHandlers[call.name];
           const output = handler ? await handler(call.args) : { error: `Tool ${call.name} not found` };
-          
+
           return {
             functionResponse: {
               name: call.name,
-              id: call.id,
-              response: { output }
+              response: output
             }
           };
         })
       );
 
       try {
-        result = await chat.sendMessage({ message: toolResults });
-        response = result;
+        result = await chat.sendMessage(toolResults);
+        response = result.response;
       } catch (toolError: any) {
         if (toolError.status === 503 || toolError.message?.includes("503")) {
           await new Promise(resolve => setTimeout(resolve, 2000));
-          result = await chat.sendMessage({ message: toolResults });
-          response = result;
+          result = await chat.sendMessage(toolResults);
+          response = result.response;
         } else {
           throw toolError;
         }
@@ -177,20 +185,37 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       iteration++;
     }
 
-    return response.text || "I'm sorry, I couldn't generate a response.";
+    return response.text() || "I'm sorry, I couldn't generate a response.";
   } catch (error: any) {
+    console.error("AI Service Error - Full Error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error status:", error.status);
+    console.error("Error code:", error.code);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+
     const errorMessage = error.message?.toLowerCase() || "";
-    
+
     if (errorMessage.includes("503") || errorMessage.includes("high demand") || errorMessage.includes("unavailable")) {
       return "I'm currently experiencing high demand. The pharmacy is a bit crowded! Please try again in a moment.";
     }
-    
+
     if (errorMessage.includes("429") || errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
       return "I've hit my request limit for the moment. Please wait a few seconds before your next question.";
     }
-    
-    console.error("AI Service Error:", error);
-    return "I'm having a little trouble connecting to my knowledge base right now. Please try again shortly!";
+
+    if (errorMessage.includes("api key") || errorMessage.includes("401") || errorMessage.includes("403") || errorMessage.includes("unauthorized")) {
+      return "AI authentication failed. Please check that GOOGLE_API_KEY is configured correctly.";
+    }
+
+    if (errorMessage.includes("network") || errorMessage.includes("fetch") || errorMessage.includes("econnrefused")) {
+      return "I'm having network connectivity issues. Please check your internet connection.";
+    }
+
+    if (errorMessage.includes("model") || errorMessage.includes("not found")) {
+      return "AI model configuration error. Please check the model settings.";
+    }
+
+    return `AI Service Error: ${error.message || "Unknown error occurred"}`;
   }
 };
 
