@@ -78,6 +78,13 @@ const signOut = catchAsync(async (req: Request, res: Response) => {
     path: "/",
   });
 
+  res.clearCookie("__Secure-better-auth.session_token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" && !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1"),
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    path: "/",
+  });
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
