@@ -1,11 +1,11 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { config } from "../config";
 
 const getClient = () => {
   if (!config.google_api_key) {
     throw new Error("GOOGLE_API_KEY is missing. Cannot initialize embeddings model.");
   }
-  return new GoogleGenerativeAI(config.google_api_key as string);
+  return new GoogleGenAI({ apiKey: config.google_api_key as string });
 };
 
 export type EmbeddingTaskType =
@@ -40,14 +40,17 @@ export const generateEmbedding = async (
 ): Promise<number[]> => {
   try {
     const client = getClient();
-    const model = client.getGenerativeModel({
-      model: "models/text-embedding-004",
+
+    const result = await client.models.embedContent({
+      model: "text-embedding-004",
+      contents: text,
+      config: {
+        taskType: mapTaskType(options?.taskType),
+      },
     });
 
-    const result = await model.embedContent(text);
-
-    if (result.embedding.values) {
-      return result.embedding.values;
+    if (result.embeddings && result.embeddings.length > 0 && result.embeddings[0].values) {
+      return result.embeddings[0].values;
     }
 
     throw new Error("No embeddings returned from model");

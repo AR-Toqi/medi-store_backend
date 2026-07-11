@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { config } from "../../config";
 import { prisma } from "../../lib/prisma";
 import { generateEmbedding } from "../../lib/embeddings";
@@ -7,13 +7,13 @@ const getClient = () => {
   if (!config.google_api_key) {
     throw new Error("GOOGLE_API_KEY is missing. Cannot initialize AI model.");
   }
-  return new GoogleGenerativeAI(config.google_api_key as string);
+  return new GoogleGenAI({ apiKey: config.google_api_key as string });
 };
 
 const SYSTEM_INSTRUCTION = "You are the Medistore AI Assistant. Help customers find medicines. Be professional. Always include Category, Price, Manufacturer, and Stock Status. Disclaimer: 'Please consult with a certified healthcare professional for medical diagnosis and treatment.'";
 
 /**
- * Tool definitions for the AI Agent
+ * Tool definitions for the AI Agent (new @google/genai SDK format)
  */
 const tools: any = [
   {
@@ -22,11 +22,11 @@ const tools: any = [
         name: "get_medicines",
         description: "Fetch a list of available medicines, optionally filtered by category or search term.",
         parameters: {
-          type: "object",
+          type: Type.OBJECT,
           properties: {
-            searchTerm: { type: "string", description: "Search for medicine name or manufacturer" },
-            category: { type: "string", description: "Filter by category name" },
-            limit: { type: "number", description: "Number of items to return (default 5)" }
+            searchTerm: { type: Type.STRING, description: "Search for medicine name or manufacturer" },
+            category: { type: Type.STRING, description: "Filter by category name" },
+            limit: { type: Type.NUMBER, description: "Number of items to return (default 5)" }
           },
         },
       },
@@ -34,10 +34,10 @@ const tools: any = [
         name: "get_medicine_details",
         description: "Fetch detailed information about a specific medicine including price, stock, and description. Provide either medicineId or slug.",
         parameters: {
-          type: "object",
+          type: Type.OBJECT,
           properties: {
-            medicineId: { type: "string", description: "The ID of the medicine" },
-            slug: { type: "string", description: "The URL slug of the medicine" }
+            medicineId: { type: Type.STRING, description: "The ID of the medicine" },
+            slug: { type: Type.STRING, description: "The URL slug of the medicine" }
           },
         },
       },
@@ -45,10 +45,10 @@ const tools: any = [
         name: "search_medicines_by_description",
         description: "Search for medicines based on symptoms, effects, or natural language descriptions (e.g., 'medicine for fever').",
         parameters: {
-          type: "object",
+          type: Type.OBJECT,
           properties: {
-            query: { type: "string", description: "The description or symptoms to search for" },
-            limit: { type: "number", description: "Number of matches to return (default 5)" }
+            query: { type: Type.STRING, description: "The description or symptoms to search for" },
+            limit: { type: Type.NUMBER, description: "Number of matches to return (default 5)" }
           },
           required: ["query"],
         },
@@ -57,7 +57,7 @@ const tools: any = [
         name: "get_categories",
         description: "List all available medicine categories.",
         parameters: {
-          type: "object",
+          type: Type.OBJECT,
           properties: {},
         },
       },
@@ -113,6 +113,7 @@ const toolHandlers: Record<string, Function> = {
 
 /**
  * Processes a chat request with the AI agent
+ * Uses the new @google/genai SDK (ai.chats.create + chat.sendMessage)
  */
 export const processAIChat = async (message: string, history: any[] = []) => {
   try {
@@ -122,62 +123,70 @@ export const processAIChat = async (message: string, history: any[] = []) => {
     const client = getClient();
     console.log("AI Chat - Client initialized successfully");
 
-    const model = client.getGenerativeModel({
-      model: "gemini-3-flash-preview",
-      systemInstruction: SYSTEM_INSTRUCTION,
-      tools: tools,
-    });
-
-    // Format history for the API
+    // Format history for the new SDK: expects { role, parts: [{ text }] }
     const formattedHistory = history.map(h => ({
       role: h.role === 'bot' ? 'model' : 'user',
-      parts: [{ text: h.parts }]
+      parts: [{ text: typeof h.parts === 'string' ? h.parts : String(h.parts) }]
     }));
 
-    const chat = model.startChat({
+    // Create chat session using the new SDK
+    const chat = client.chats.create({
+      model: "gemini-3-flash-preview",
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        tools: tools,
+      },
       history: formattedHistory,
     });
 
     let result;
     try {
-      result = await chat.sendMessage(message);
+      result = await chat.sendMessage({ message });
     } catch (firstError: any) {
       if (firstError.status === 503 || firstError.message?.includes("503") || firstError.message?.includes("high demand")) {
         await new Promise(resolve => setTimeout(resolve, 2000));
-        result = await chat.sendMessage(message);
+        result = await chat.sendMessage({ message });
       } else {
         throw firstError;
       }
     }
-    
-    let response = result.response;
+
+    // Handle function calling loop (new SDK uses .functionCalls as a property, not a method)
     let iteration = 0;
     const maxIterations = 5;
 
-    while (response.functionCalls?.() && iteration < maxIterations) {
-      const functionCalls = response.functionCalls();
-      const toolResults = await Promise.all(
-        functionCalls!.map(async (call: any) => {
+    while (result.functionCalls && result.functionCalls.length > 0 && iteration < maxIterations) {
+      const functionCalls = result.functionCalls;
+      console.log("AI Chat - Function calls:", functionCalls.map((fc: any) => fc.name));
+
+      // Execute each function call and collect results
+      const functionResponses = await Promise.all(
+        functionCalls.map(async (call: any) => {
           const handler = toolHandlers[call.name];
           const output = handler ? await handler(call.args) : { error: `Tool ${call.name} not found` };
 
           return {
-            functionResponse: {
-              name: call.name,
-              response: output
-            }
+            name: call.name,
+            response: output,
           };
         })
       );
 
+      // Send function responses back to the model
       try {
-        result = await chat.sendMessage(toolResults);
-        response = result.response;
+        result = await chat.sendMessage({
+          message: functionResponses.map(fr => ({
+            functionResponse: fr,
+          })),
+        });
       } catch (toolError: any) {
         if (toolError.status === 503 || toolError.message?.includes("503")) {
           await new Promise(resolve => setTimeout(resolve, 2000));
-          result = await chat.sendMessage(toolResults);
-          response = result.response;
+          result = await chat.sendMessage({
+            message: functionResponses.map(fr => ({
+              functionResponse: fr,
+            })),
+          });
         } else {
           throw toolError;
         }
@@ -185,7 +194,7 @@ export const processAIChat = async (message: string, history: any[] = []) => {
       iteration++;
     }
 
-    return response.text() || "I'm sorry, I couldn't generate a response.";
+    return result.text || "I'm sorry, I couldn't generate a response.";
   } catch (error: any) {
     console.error("AI Service Error - Full Error:", error);
     console.error("Error message:", error.message);
